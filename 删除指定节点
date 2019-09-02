@@ -1,0 +1,47 @@
+请编写一个函数，使其可以删除某个链表中给定的（非末尾）节点，你将只被给定要求被删除的节点。
+现有一个链表 -- head = [4,5,1,9]，它可以表示为:
+输入: head = [4,5,1,9], node = 5
+输出: [4,1,9]
+解释: 给定你链表中值为 5 的第二个节点，那么在调用了你的函数之后，该链表应变为 4 -> 1 -> 9.
+
+非常基础的一个链表结点删除，但是看到代码后我却无从下手了
+```
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode(int x) : val(x), next(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    void deleteNode(ListNode* node) {
+        }
+};
+what？只给了一个形参？不是应该给出链表的吗？
+但是还是立即开始思考如何遍历链表，这个过程中就暴露自己对遍历记得不牢固了，一直纠结判断条件到底是先判断结点值是否相等还是当前节点是否已经到达尾结点，翻查书籍后发现也不对啊，书中描述至少应该给出链表和删除标记（删除位置或删除值）
+心灰意冷下打开评论才发现是自己读题错误了，题目给出的条件是删除【给定的】节点！
+然后瞬间就想出答案了
+```
+class Solution {
+public:
+    void deleteNode(ListNode* node) {
+        node->val = node->next->val;
+        node->next =  node->next->next;
+        }
+};
+```
+同时发现一个小问题，一开始在调用val数据成员时想按老习惯进行解引用(\*)和调用符（.），由于解引用符的优先级低于调用符，所以是必需在解引用指针时加上括号的，于是就出现了下面的情况：
+```
+class Solution {
+public:
+    void deleteNode(ListNode* node) {
+        (*node).val = (*((*node).next)).val;
+        (*node).next = (*((*node).next)).next;
+        }
+};
+```
+代码是自己写的自己还能懂，但是如果和同事交接时，这可读性可以说是惨不忍睹了...所以老习惯不一定是好习惯啊。
+这一次的心得体会：还是得好好看题！看清楚题目要求比一切都重要！同时基础要扎实！培养良好的代码风格！
+
