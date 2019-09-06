@@ -1,0 +1,46 @@
+> 给定一个数组，将数组中的元素向右移动 k 个位置，其中 k 是非负数。
+> 
+> 示例 1:
+> 
+> 输入: [1,2,3,4,5,6,7] 和 k = 3
+> 输出: [5,6,7,1,2,3,4]
+> 解释:
+> 向右旋转 1 步: [7,1,2,3,4,5,6]
+> 向右旋转 2 步: [6,7,1,2,3,4,5]
+> 向右旋转 3 步: [5,6,7,1,2,3,4]
+> 
+> 尽可能想出更多的解决方案，至少有三种不同的方法可以解决这个问题。
+要求使用空间复杂度为 O(1) 的 原地 算法。
+
+> 来源：力扣（LeetCode）
+> 链接：https://leetcode-cn.com/problems/rotate-array
+> 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+按照昨天学习到的思想，对题目进行分解：
+首先是特殊情况：k == 0 || nums.size() == 0 || nums.size() == 1 || nums.size() == k，直接白给return
+然后是两种情况
+第一种 k大于size 第二种k小于size
+其实第一种可以通过k%size转化为第二种（发现自己居然忘了c++的取余数为%）
+但是最后被旋转原地移动难住了，最后只能暴力出奇迹，一位一位地移动了：
+
+```
+class Solution {
+	public:
+		void rotate(vector<int>& nums, int k) {
+			if (k == 0 || nums.size() == 0 || nums.size() == 1 || nums.size() == k)
+				return;
+			else if (nums.size()<k)
+				k = k%nums.size();
+			while (k>0) {
+				int temp = nums[nums.size() - 1];
+				for (int j = nums.size() - 1; j>0; --j)
+					nums[j] = nums[j - 1];
+				nums[0] = temp;
+				--k;
+			}
+			return;
+		}
+	};
+```
+最后提交居然超过了时间限制？
+一看题解，what？第一个就是暴力解啊？？？我的还是做了情况优化的，把Java代码转化为C++，还是白给了。。。C++无人权啊！！！
