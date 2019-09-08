@@ -22,6 +22,25 @@
 2.取最大值作为另外一个数组的大小值；
 因为昨天回家了，所以是在平板上做题的，没有保存好代码，只保存了最后的代码
 
+public:
+    int firstMissingPositive(vector<int>& nums) {
+        if(nums.size()==0)
+            return 1;
+        for (int i=0;i<nums.size();++i)
+            if(nums[i]>nums.size())
+                nums[i] = 0; 
+        vector<int> norm(nums.size(),0);
+        for(auto i : nums)
+            if(i>0){
+                norm[i-1]=1;
+            }
+        for(int i = 0;i<nums.size();++i)
+            if(norm[i]!=1)
+                return i+1;
+        return nums.size()+1;     
+    }
+
+
 最后提交还是毫无疑问地出错了。。。系统给我安排一个过亿的数值能不出错嘛。。。
 这个时候不小心瞄到一眼答案，发现必须把大于数组长度的值置为0，hhh修改后就通过啦！（当然此时已经不符合常数级别空间的要求）
 
