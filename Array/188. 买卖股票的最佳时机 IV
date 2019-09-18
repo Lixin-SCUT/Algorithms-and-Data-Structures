@@ -1,0 +1,89 @@
+原题目
+> 给定一个数组，它的第 i 个元素是一支给定的股票在第 i 天的价格。
+> 设计一个算法来计算你所能获取的最大利润。你最多可以完成 k 笔交易。
+> 注意: 你不能同时参与多笔交易（你必须在再次购买前出售掉之前的股票）。
+> 
+> 示例 1:
+> 输入: [2,4,1], k = 2
+> 输出: 2
+> 解释: 在第 1 天 (股票价格 = 2) 的时候买入，在第 2 天 (股票价格 = 4) 的时候卖出，这笔交易所能获得利润 = 4-2 = 2 。
+> 示例 2:
+> 输入: [3,2,6,5,0,3], k = 2
+> 输出: 7
+> 解释: 在第 2 天 (股票价格 = 2) 的时候买入，在第 3 天 (股票价格 = 6) 的时候卖出, 这笔交易所能获得利润 = 6-2 = 4 。
+>      随后，在第 5 天 (股票价格 = 0) 的时候买入，在第 6 天 (股票价格 = 3) 的时候卖出, 这笔交易所能获得利润 = 3-0 = 3 。
+> 
+> 来源：力扣（LeetCode）
+> 链接：https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-iv
+> 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+> 
+
+参考股票买卖问题的动态规划，可以得出本次与前面的题的差别在于k等于不定值，既可以等于无限，也可以等于特定值，坑也是在这个上面，由于和之前的差不多，我直接加工了之前的代码，主要是增加了k和n/2的对比，主要是想限制k的不合理值，降低维数：
+```
+class Solution {
+public:
+    int maxProfit(int k, vector<int>& prices) {
+         const int n = prices.size();
+        if(n==0||n==1)
+            return 0;
+	const int max_k = k<n/2?k:n/2;
+	vector<vector<vector<int>>> dp(n, vector<vector<int>>(max_k+1, vector<int>(2,0)));
+	for (int i = 0; i < n; i++) {
+		for (int k = 1; k <=max_k; k++) {
+			if (i - 1 == -1) { 
+				dp[0][k][0] = 0 ;
+				dp[0][k][1] = - prices[0];
+			}
+			else {
+				dp[i][k][0] = dp[i - 1][k][0]>dp[i - 1][k][1] + prices[i] ? dp[i - 1][k][0] : dp[i - 1][k][1] + prices[i];
+				dp[i][k][1] = dp[i - 1][k][1]>dp[i - 1][k - 1][0] - prices[i] ? dp[i - 1][k][1] : dp[i - 1][k - 1][0] - prices[i];
+			}
+		}
+	}
+	return dp[n - 1][max_k][0];
+    }
+};
+```
+结果显示内存爆炸，出问题的用例是：
+1000000000
+[106,373,495,46,359,919,906,440,783,583,784,73,238,701,972,308,165,774,990,675,737,990,713,157,211,880,961,132,980,...]
+
+k值我是处理过的，不应该是它的影响，然后翻看了题解中其他人也有这个问题，最后仔细思考了一下，发现一个比较奇葩的问题，虽然代码是对的，但是其实k>n/2的时候已经等于无限购买次数的情况了，那就和题目二的情况一样了，完全可以使用题目二的代码来取消k的作用，降低维数，所以给出代码如下：
+```
+class Solution {
+public:
+    int maxProfit(int k, vector<int>& prices) {
+         const int n = prices.size();
+        if(n==0||n==1)
+            return 0;
+        if(k>n/2){
+            int len=prices.size();
+        int max=0;
+        vector<int> profit(len,0);
+        for(int i=1;i<len;++i)
+            profit[i]=prices[i]-prices[i-1];
+        for(int i=0;i<len;++i)
+            if(profit[i]>0)
+                max +=profit[i];
+        return max;
+            
+        }
+	const int max_k = k;
+	vector<vector<vector<int>>> dp(n, vector<vector<int>>(max_k+1, vector<int>(2,0)));
+	for (int i = 0; i < n; i++) {
+		for (int k = 1; k <=max_k; k++) {
+			if (i - 1 == -1) { 
+				dp[0][k][0] = 0 ;
+				dp[0][k][1] = - prices[0];
+			}
+			else {
+				dp[i][k][0] = dp[i - 1][k][0]>dp[i - 1][k][1] + prices[i] ? dp[i - 1][k][0] : dp[i - 1][k][1] + prices[i];
+				dp[i][k][1] = dp[i - 1][k][1]>dp[i - 1][k - 1][0] - prices[i] ? dp[i - 1][k][1] : dp[i - 1][k - 1][0] - prices[i];
+			}
+		}
+	}
+	return dp[n - 1][max_k][0];
+    }
+};
+```
+最后顺利通过，虽然花的时间还是比较多，不过通过这一次还是认识到不能简单地照搬代码，还是得老老实实地思考优化等方面的问题！
