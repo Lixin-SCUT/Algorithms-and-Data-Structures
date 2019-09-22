@@ -1,0 +1,308 @@
+> 给定 n 个非负整数表示每个宽度为 1 的柱子的高度图，计算按此排列的柱子，下雨之后能接多少雨水。
+> ![](file://C:/Users/lab509/Documents/Gridea/post-images/1569158527522.png)
+> 上面是由数组 [0,1,0,2,1,0,1,3,2,1,2,1] 表示的高度图，在这种情况下，可以接 6 个单位的雨水（蓝色部分表示雨水）。 感谢 Marcos 贡献此图。
+> 示例:
+> 输入: [0,1,0,2,1,0,1,3,2,1,2,1]
+> 输出: 6
+> 来源：力扣（LeetCode）
+> 链接：https://leetcode-cn.com/problems/trapping-rain-water
+> 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+> 
+
+这道题一开始还是没有比较好的思路，主要的纠结点在于如何处理左边的结点，一开始本来想用暴力法，但是太暴力了，所以想改进一下。改进的方法为确定一个左值left，然后寻找一个右值能够大于或者等于left，同时在过程中累积雨水量rain，如果能够找到符合条件的右值，就将rain累加到总的雨水量中去
+以为为未通过的代码：问题也很明显，只能收集到从左到右符合条件（先低后高）的点，遇到【4，3，2】这种先高后低的情况就没办法检测到，只能从右到左再做一遍，此时就发现思路有问题了，所以直接看题解吧
+```
+class Solution {
+public:
+    int trap(vector<int>& height) {
+        int len = height.size();
+        if(len==0||len==1||len==2){
+            return 0;
+        }
+        int rain_all=0;
+        int left=0;
+        int rain=0;
+        for(int i=0;i<len;++i)
+            if(height[i]>0){
+                left=i;
+                if(i>=len-2)
+                    return 0;
+                break;
+            }else if(i==len-1)
+                return 0;
+        for(int i=left;i<len-2;){
+            int h = height[i];
+            for(int j=i+1;j<len;++j)
+                if(j==len-1&&height[j]<h){
+                    rain=0;
+                    ++i;
+                    break;
+                }else if(height[j]<h){
+                    rain+=h-height[j];
+                }else{
+                    rain_all+=rain;
+                    rain=0;
+                    i=j;
+                    break;
+                }      
+        }
+        return rain_all;
+    }
+};
+```
+官方题解：
+方法 1：暴力
+直观想法
+直接按问题描述进行。对于数组中的每个元素，我们找出下雨后水能达到的最高位置，等于两边最大高度的较小值减去当前高度的值。
+
+算法
+初始化ans=0
+从左向右扫描数组：
+初始化 max_left=0 和max_right=0
+从当前元素向左扫描并更新：
+max_left=max(max_left,height[j])
+从当前元素向右扫描并更新：
+max_right=max(max_right,height[j])
+将min(max_left,max_right)−height[i] 累加到 ans
+```
+Java
+int trap(vector<int>& height)
+{
+    int ans = 0;
+    int size = height.size();
+    for (int i = 1; i < size - 1; i++) {
+        int max_left = 0, max_right = 0;
+        for (int j = i; j >= 0; j--) { //Search the left part for max bar size
+            max_left = max(max_left, height[j]);
+        }
+        for (int j = i; j < size; j++) { //Search the right part for max bar size
+            max_right = max(max_right, height[j]);
+        }
+        ans += min(max_left, max_right) - height[i];
+    }
+    return ans;
+}
+```
+复杂性分析
+时间复杂度： O(n^2)。数组中的每个元素都需要向左向右扫描。
+空间复杂度O(1) 的额外空间
+
+方法 2：动态编程
+直观想法
+在暴力方法中，我们仅仅为了找到最大值每次都要向左和向右扫描一次。但是我们可以提前存储这个值。因此，可以通过动态编程解决。
+这个概念可以见下图解释：
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1569159456849.png)
+算法
+找到数组中从下标 i 到最左端最高的条形块高度left_max。
+找到数组中从下标 i 到最右端最高的条形块高度 right_max。
+扫描数组height 并更新答案：
+累加min(max_left[i],max_right[i])−height[i] 到 ans 上
+```
+C++
+int trap(vector<int>& height)
+{
+	if(height == null)
+		return 0;
+    int ans = 0;
+    int size = height.size();
+    vector<int> left_max(size), right_max(size);
+    left_max[0] = height[0];
+    for (int i = 1; i < size; i++) {
+        left_max[i] = max(height[i], left_max[i - 1]);
+    }
+    right_max[size - 1] = height[size - 1];
+    for (int i = size - 2; i >= 0; i--) {
+        right_max[i] = max(height[i], right_max[i + 1]);
+    }
+    for (int i = 1; i < size - 1; i++) {
+        ans += min(left_max[i], right_max[i]) - height[i];
+    }
+    return ans;
+}
+```
+复杂性分析
+时间复杂度：O(n)。
+存储最大高度数组，需要两次遍历，每次 O(n) 。
+最终使用存储的数据更新ans ，O(n)。
+空间复杂度：O(n) 额外空间。
+和方法 1 相比使用了额外的 O(n) 空间用来放置left_max 和right_max 数组。
+
+方法 3：栈的应用
+直观想法
+我们可以不用像方法 2 那样存储最大高度，而是用栈来跟踪可能储水的最长的条形块。使用栈就可以在一次遍历内完成计算。
+我们在遍历数组时维护一个栈。如果当前的条形块小于或等于栈顶的条形块，我们将条形块的索引入栈，意思是当前的条形块被栈中的前一个条形块界定。如果我们发现一个条形块长于栈顶，我们可以确定栈顶的条形块被当前条形块和栈的前一个条形块界定，因此我们可以弹出栈顶元素并且累加答案到 ans 。
+
+算法
+使用栈来存储条形块的索引下标。
+遍历数组：
+当栈非空且height[current]>height[st.top()]
+意味着栈中元素可以被弹出。弹出栈顶元素 top。
+计算当前元素和栈顶元素的距离，准备进行填充操作
+distance=current−st.top()−1
+找出界定高度
+bounded_height=min(height[current],height[st.top()])−height[top]
+往答案中累加积水量ans+=distance×bounded_height
+将当前索引下标入栈
+将urrent 移动到下个位置
+C++
+```
+int trap(vector<int>& height)
+{
+    int ans = 0, current = 0;
+    stack<int> st;
+    while (current < height.size()) {
+        while (!st.empty() && height[current] > height[st.top()]) {
+            int top = st.top();
+            st.pop();
+            if (st.empty())
+                break;
+            int distance = current - st.top() - 1;
+            int bounded_height = min(height[current], height[st.top()]) - height[top];
+            ans += distance * bounded_height;
+        }
+        st.push(current++);
+    }
+    return ans;
+}
+```
+复杂性分析
+时间复杂度：O(n)。
+单次遍历 O(n) ，每个条形块最多访问两次（由于栈的弹入和弹出），并且弹入和弹出栈都是 O(1) 的。
+空间复杂度：O(n)。 栈最多在阶梯型或平坦型条形块结构中占用 O(n) 的空间。
+
+方法 4：使用双指针
+直观想法
+和方法 2 相比，我们不从左和从右分开计算，我们想办法一次完成遍历。
+从动态编程方法的示意图中我们注意到，只要right_max[i]>left_max[i] （元素 0 到元素 6），积水高度将由 left_max 决定，类似地 left_max[i]>right_max[i]（元素 8 到元素 11）。
+所以我们可以认为如果一端有更高的条形块（例如右端），积水的高度依赖于当前方向的高度（从左到右）。当我们发现另一侧（右侧）的条形块高度不是最高的，我们则开始从相反的方向遍历（从右到左）。
+我们必须在遍历时维护left_max 和 right_max ，但是我们现在可以使用两个指针交替进行，实现 1 次遍历即可完成。
+
+算法
+初始化 left 指针为 0 并且right 指针为 size-1
+While left<right, do:
+If height[left] <height[right]
+	If eight[left]≥left_max, 更新left_max
+	Else 累加left_max−height[left] 到ans
+	left = left + 1.
+Else
+If height[right]≥right_max, 更新 right_max
+Else 累加 right_max−height[right] 到 ans
+right =right - 1.
+
+```
+int trap(vector<int>& height)
+{
+    int left = 0, right = height.size() - 1;
+    int ans = 0;
+    int left_max = 0, right_max = 0;
+    while (left < right) {
+        if (height[left] < height[right]) {
+            height[left] >= left_max ? (left_max = height[left]) : ans += (left_max - height[left]);
+            ++left;
+        }
+        else {
+            height[right] >= right_max ? (right_max = height[right]) : ans += (right_max - height[right]);
+            --right;
+        }
+    }
+    return ans;
+}
+复杂性分析
+```
+时间复杂度：O(n)。单次遍历的时间O(n)。
+空间复杂度：O(1)的额外空间。left,right, left_max 和 right_max 只需要常数的空间。
+
+借用评论的一句话：这么多解法 ，我一个也没想起来，依旧菜鸡...
+这一整周状态都很差，感觉从那件水桶时间开始就一直碰到不好的事，幸好刷leetcode算是比较舒服的一件事了，现在来看一下这四个题解吧
+（1）首先虽然暴力法很暴力，不过还是有可取的地方的，其思想是取两边的最大值，然后再取两个最大值中的**小值**，其实就相当于把两边的最大值移动到当前位置的两边，测试一个当前位置自己能够装多少水，然后累积每个位置的水。
+（2）第二题其实是暴力解的进一步简化，思想比较简单，但是很实用，就是把最大值提前算出来放好，计算的时候再用上，用空间换取了时间，这一个题解对我的震撼很大，因为之前都是不太看得起暴力解，但是这里让我意识到从暴力解入手进行优化也是很重要的一种思路啊！所以还是**不能好高骛远！** 扎扎实实才能站得更高更稳！
+我给出的代码如下
+```
+class Solution {
+public:
+    int trap(vector<int>& height) {
+        int len = height.size();
+        if(len==0||len==1||len==2){
+            return 0;
+        }
+        int left=0,right=0;
+       vector<int> max_left(len),max_right(len);
+        for(int i=0;i<len;++i)
+            if(left>height[i])
+               max_left[i]=left;
+            else
+                max_left[i]=height[i],left=height[i];
+        for(int i=len-1;i>=0;--i)
+            if(right>height[i])
+                max_right[i]=right;
+            else
+                 max_right[i]=height[i],right=height[i];
+        int ans=0;
+        for(int i=0;i<len;++i)
+            ans+=(max_left[i]<max_right[i]?max_left[i]:max_right[i])-height[i];
+        return ans;
+    }
+};
+```
+（3）题解三用到了栈，但是我一开始想了很久都没想明白是怎么做到的，因为比如很简单的情况 21013，第二个1进来的时候只能对0进行操作，此时对比0两边的数，ans只能增加1，而实际上0这个位置可以增加2（因为最大的值其实是2），题解中非常巧妙地引入了distance的概念，相当于把水按行来计算，而不是和前两题一样按照列来算，比如2101中，101把第一行的空格子填满了，而213时（注意0和第二个1被弹出栈了），计算distance相当于把第二行给填满了（(2-1)+3），一开始还不容易看出呢，同时push被安排在while循环后面，不仅感叹妙啊！需要注意的地方是如果弹出栈顶后栈为空（等于没了一边边界），就需要break跳出循环直接push了
+```
+class Solution {
+public:
+    int trap(vector<int>& height) {
+        int len = height.size();
+        if(len==0||len==1||len==2){
+            return 0;
+        }
+        stack<int> s;
+        int ans=0;
+        for(int i=0;i<len;++i){
+            if(s.empty())
+                s.push(i);
+            else{
+                while(height[i]>height[s.top()]){
+                    int top = s.top();
+                    s.pop();
+                    if(s.empty())
+                        break;
+                    int distance = i-s.top()-1;
+                    ans += ((height[i]<height[s.top()]?height[i]:height[s.top()])-height[top])*distance;
+                }
+                s.push(i);
+            }    
+        }
+        return ans;
+    }
+};
+```
+题解四的思路就比较6了直接两面夹击，使用双指针进行比较，也是相当于直接把边界缩减到当前元素的两边
+```
+class Solution {
+public:
+    int trap(vector<int>& height) {
+        int len = height.size();
+        if(len==0||len==1||len==2){
+            return 0;
+        }
+        
+        int ans=0;
+        int left_max=0;
+        int right_max=0;
+        auto left=height.begin(),right=height.end()-1;
+        while(left<right){
+            if(*left<*right)
+                if(*left>=left_max)
+                    left_max=*left,++left;
+                else
+                    ans+= left_max-*left,++left;
+            else
+                if(*right>=right_max)
+                    right_max=*right,--right;
+                else
+                    ans+= right_max-*right,--right;
+        
+        }
+        return ans;
+    }
+};
+```
+
