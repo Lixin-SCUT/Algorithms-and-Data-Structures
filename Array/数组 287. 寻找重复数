@@ -1,0 +1,238 @@
+> 给定一个包含 n + 1 个整数的数组 nums，其数字都在 1 到 n 之间（包括 1 和 n），可知至少存在一个重复的整数。假设只有一个重复的整数，找出这个重复的数。
+> 
+> 示例 1:
+> 输入: [1,3,4,2,2]
+> 输出: 2
+> 示例 2:
+> 输入: [3,1,3,4,2]
+> 输出: 3
+> 说明：
+> 不能更改原数组（假设数组是只读的）。
+> 只能使用额外的 O(1) 的空间。
+> 时间复杂度小于 O(n2) 。
+> 数组中只有一个重复的数字，但它可能不止重复出现一次。
+> 
+> 来源：力扣（LeetCode）
+> 链接：https://leetcode-cn.com/problems/find-the-duplicate-number
+> 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+> 
+
+这个的话和昨天的相比的话也是比较明显的，普通的方法就是排序加遍历，排序可以分为快速排序和桶排序为主的两种原地排序和非原地排序之分，这两者主要的区别在于空间和时间上的取舍，但是明显地都不符合本题目的要求，所以应该是使用了非排序的方法。
+我一开始的时候想过使用每个位置的数组和来检测重复值，但是明显地如果重复数字出现多次的话就无法适用了，所以还是先看官方题解吧
+> 注释 ：
+> 前面的两种方法不满足提示中给出的约束条件，但它们是您在技术面试中可能会想到的解决方案。作为一名面试官，我个人不希望有人提出循环解决方案。
+> 证明：
+> 证明 nums 中存在至少一个副本是鸽子洞原理的简单应用。这里，nums 中的每个数字都是一个 “鸽子”，nums 中可以出现的每个不同的数字都是一个 “鸽子洞”。因为有 n+1个数是 n 个不同的可能数，鸽子洞原理意味着至少有一个数是重复的。
+方法一：排序
+如果对数字进行排序，则任何重复的数字都将与排序后的数组相邻。
+算法：
+算法相当简单。首先，我们对数组进行排序，然后将每个元素与前一个元素进行比较。因为数组中只有一个重复的元素，所以我们知道数组的长度至少为 2，一旦找到重复的元素，我们就可以返回它。
+```
+JavaPython
+class Solution {
+    public int findDuplicate(int[] nums) {
+        Arrays.sort(nums);
+        for (int i = 1; i < nums.length; i++) {
+            if (nums[i] == nums[i-1]) {
+                return nums[i];
+            }
+        }
+
+        return -1;
+    }
+}
+```
+> 复杂度分析
+> 时间复杂度：O(nlgn)。排序调用在 Python 和 Java 中花费 O(nlgn) 时间，因此它支配后续的线性扫描。
+> 空间复杂度：O(1) (or O(n))，在这里，我们对 nums 进行排序，因此内存大小是恒定的。如果我们不能修改输入数组，那么我们必须为 nums 的副本分配线性空间，并对其进行排序。
+> 方法二：集合
+> 如果我们在数组上迭代时存储每个元素，我们可以在数组上迭代时简单地检查每个元素。
+> 
+> 算法：
+> 为了实现线性时间复杂性，我们需要能够在恒定时间内将元素插入数据结构（并查找它们）。set 很好地满足这些约束，所以我们迭代数组并将每个元素插入 seen 中。在插入之前，我们检查它是否已经存在。如果是，那么我们找到了我们的副本，所以我们返回它。
+```
+JavaPython
+class Solution {
+    public int findDuplicate(int[] nums) {
+        Set<Integer> seen = new HashSet<Integer>();
+        for (int num : nums) {
+            if (seen.contains(num)) {
+                return num;
+            }
+            seen.add(num);
+        }
+
+        return -1;
+    }
+}
+```
+> 复杂度分析
+> 时间复杂度：O(n)。Python 和 Java 都依赖于底层的哈希表，所以插入和查找有固定的时间复杂度。因此，该算法是线性的，因为它由一个执行 N 次恒定工作的 for 循环组成。
+> 空间复杂度：O(n)，在最坏的情况下，重复元素出现两次，其中一次出现在数组索引 n-1 处。在这种情况下，seen 将包含 n−1 不同的值，因此将占用 O(n) 空间。
+> 
+> 方法三：弗洛伊德的乌龟和兔子（循环检测）
+> 如果我们对 nums 进行这样的解释，即对于每对索引 i 和值 v_i而言，“下一个” v_j位于索引 v_i处，我们可以将此问题减少到循环检测。
+> 
+> 算法：
+> 首先，我们可以很容易地证明问题的约束意味着必须存在一个循环。因为 nums 中的每个数字都在 1 和 n 之间，所以它必须指向存在的索引。此外，由于 0 不能作为 nums 中的值出现，nums[0] 不能作为循环的一部分。
+```
+class Solution {
+    public int findDuplicate(int[] nums) {
+        // Find the intersection point of the two runners.
+        int tortoise = nums[0];
+        int hare = nums[0];
+        do {
+            tortoise = nums[tortoise];
+            hare = nums[nums[hare]];
+        } while (tortoise != hare);
+
+        // Find the "entrance" to the cycle.
+        int ptr1 = nums[0];
+        int ptr2 = tortoise;
+        while (ptr1 != ptr2) {
+            ptr1 = nums[ptr1];
+            ptr2 = nums[ptr2];
+        }
+
+        return ptr1;
+    }
+}
+```
+> 复杂度分析
+> 时间复杂度：O(n)。
+> 空间复杂度：O(1)。
+
+题解一比较简单，我打算自己实现以下快速排序
+```
+void QuickSort(vector<int> &vi, vector<int>::iterator low, vector<int>::iterator high) {
+	vector<int>::iterator middle;
+	if (low < high) {
+		middle = partition(vi,low,high);
+		QuickSort(vi, low, middle);
+		QuickSort(vi, ++middle, high);
+	}
+}
+
+vector<int>::iterator partition(vector<int> &vi, vector<int>::iterator low, vector<int>::iterator high) {
+	int pivotkey;
+	if (low < high)
+		pivotkey = *low;
+	while (low < high) {
+	while (low < high&&pivotkey <= *high) 
+			--high;
+	iter_swap(low, high);
+		while (low < high&&*low <= pivotkey) 
+			++low;
+		iter_swap(low, high);	
+	}
+	return low;
+}
+```
+哇居然被这个弄得有点焦头烂额，因为主要的槽点在于迭代器上，为了提高算法的泛型能力我用了迭代器（bidiretional iterator，支持++和--）而不是数组下标。书里的方法对于middle的两分法是分为 `[low,middle-1]、 [middle+1,high]` 对于数组下标来说这是小菜一碟，但是对于迭代器来说就不一样了，比如{1，0}这种情况当middle去到了边缘处，如果middle是迭代器，middle+1是没问题的，毕竟还有尾后迭代器，但是middle-1就8行了，所以只能用`[low,middle]、 [middle+1,high]`算是为了通用性牺牲了一点计算量吧。
+
+题解二是一个集合，最简单的明显就是我一开始想到的set大法啦hhh，因为set的insert会返回一对pair，pair的second就用了bool值反映插入的成功与否，也太方便了吧hhh，当然set的底层是RB-tree，所以其中的操作可不简单，有时间得好好复习stl源码剖析。
+
+第三个题解就是目标解了，不过就好像评论中所说，这个方法实在是太取巧了，颇有一种打哪指哪的感觉hhh
+这个方法重点在于把数组视为一个链表，其中的元素值就是指针，如果n+1个元素中有重复的，必然会形成一个内循环。
+贴一个网友给的其中的数学原理
+```
+ #此题转换为链表找环的开始位置，前提条件告诉我们是一定有环
+ # 根据floyd判圈办法，一个快指针一个慢指针，二者一定在环上相遇，设相遇点为M点，
+ # 快是慢的速度的2倍，时间相同，设慢的距离为s，那么快的距离为2s
+ # m为链表头距离环开始位置的距离，k为环开始位置到M点的距离, N为环长度
+ # s = m + a*N +k, 2s = m + b*N +k，二者相减，s = (a-b)*N
+ # 由此可见，慢指针走过的距离是环长的整数倍，即链表头到M点是环长的整数倍
+ # 如果是1倍的话，把m截距离旋转到环上，跟环融合，那么链表头一定落在M点，
+# 即fast和slow都落在M点，那么二者到环开始位置距离相同，必然在此处相遇。
+# 如果是N倍（N>1）时，只不过slow指针多转几圈而已，后二者扔在此处相遇
+```
+```
+class Solution {
+public:
+    int findDuplicate(vector<int>& nums) {
+        int len=nums.size();
+        if(len<2)
+            return 0;
+        if(len==2)
+            return nums[0];
+        int fast=nums[0],slow=nums[0];
+        do{
+            slow=nums[slow];
+            fast=nums[nums[fast]];
+        }while(fast!=slow);
+        fast=nums[0];
+        while(slow!=fast){
+            slow=nums[slow];
+            fast=nums[fast];
+        }
+        return fast;
+    }
+};
+```
+比较难理解的就在于这一段了，这一段增速都是一致的。
+```
+fast=nums[0];
+        while(slow!=fast){
+						slow=nums[slow];
+						fast=nums[fast];
+        }
+```
+
+然后网友给出了更有趣的一个重复数二分法，既符合了条件，又不会有太针对性的感觉。
+
+> 方法：二分法
+> 关键：这道题的关键是对要定位的“数”做二分，而不是对数组的索引做二分。要定位的“数”根据题意在 11 和 nn 之间，每一次二分都可以将搜索区间缩小一半。
+> 
+> 以 `[1, 2, 2, 3, 4, 5, 6, 7]` 为例，一共有 8 个数，每个数都在 1 和 7 之间。1 和 7 的中位数是 4，遍历整个数组，统计小于 4 的整数的个数，至多应该为 3 个，如果超过 3 个就说明重复的数存在于区间 `[1,4) `（注意：左闭右开）中；否则，重复的数存在于区间 [4,7]（注意：左右都是闭）中。这里小于 4 的整数有 4 个（它们是 1, 2, 2, 3），因此砍掉右半区间，连中位数也砍掉。以此类推，最后区间越来越小，直到变成 1 个整数，这个整数就是我们要找的重复的数。
+
+参考代码 1：
+```
+C++
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+class Solution {
+public:
+    int findDuplicate(vector<int> &nums) {
+        int len = nums.size();
+        int left = 0;
+        int right = len - 1;
+
+        while (left < right) {
+            int mid = (left + right) >> 1;
+            int counter = 0;
+            for (int num:nums) {
+                if (num <= mid) {
+                    counter++;
+                }
+            }
+
+            if (counter > mid) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+        return left;
+    }
+};
+```
+> 说明：1、在 Python 中，整除使用 // ，如果使用 / ，在不能整除的时候，会返回一个小数；
+> 2、之所以写成 mid = left + (right - left + 1) // 2 ，是因为下面的分支条件是：left = mid 和 right = mid - 1，如果写成 mid = left + (right - left) // 2 就会陷入死循环。我们还是以具体例子为例。
+> 当一个整数数组（按升序排列）的个数为奇数时，不论 mid = left + (right - left) // 2 和 mid = left + (right - left + 1) // 2 都落在了相同的一个数，大家不妨拿 [1,2,3,4,5] 做验证；
+> 
+> 当一个整数数组（按升序排列）的个数为偶数时：
+> （1） mid = left + (right - left) // 2 找到的是中间位置偏左的元素；
+> （2） mid = left + (right - left + 1) // 2 找到的是中间位置偏右的元素。
+> 可以拿 [1,2,3,4] 验证。
+> 因此如果分支是：left = mid 和 right = mid - 1，说明，当只有 2 个元素的时候，中位数不能取左边，否则会出现死循环，因此中位数的取法是 mid = left + (right - left + 1) // 2。
+> 如果分支是：left = mid + 1 和 right = mid，说明，当只有 2 个元素的时候，中位数不能取右边，否则会出现死循环，因此中位数的取法是 mid = left + (right - left) // 2。
+> 
+> 3、`while left < right ` 一定是严格小于，这样退出循环的时候就一定有 l==r 成立，就不必纠结该返回 l 还是 r 了。
+> 
+> 总结一下：while left < right 一定是严格小于，最后把一个区间“夹逼”成一个数，二分法先写两个分支，再根据分支的情况，调整如何取中点。
+
+
+
