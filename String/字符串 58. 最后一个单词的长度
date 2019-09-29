@@ -1,0 +1,63 @@
+> 给定一个仅包含大小写字母和空格 ' ' 的字符串，返回其最后一个单词的长度。
+> 如果不存在最后一个单词，请返回 0 。
+> 
+> 说明：一个单词是指由字母组成，但不包含任何空格的字符串。
+> 示例:
+> 输入: "Hello World"
+> 输出: 5
+> 
+> 来源：力扣（LeetCode）
+> 链接：https://leetcode-cn.com/problems/length-of-last-word
+> 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+这道题也是简单题，其中主要的要点在于特殊例子。我一开始的想法是单纯地检测空格
+1.首先考虑最简单的情况，那就是正常的字符串，比如"hallo world"最后一个空格肯定是在最后一个单词前面，所以可以使用string的搜索算法 find_last_of(" "),然后用length减去返回的下标再减去1，同时适用于空格在字符串一开头的地方，比如" hallo"
+2.然后考虑特例之空格符出现在最后并且有单词，此时需要检测两个空格（因为 find_last_of是使用反向迭代器进行搜索的，所以后面所述的第一个对应最后一个）首先对第一个空格的位置进行检测证明loc=len-1，然后注意从第一个空格的位置loc-1开始搜索第二个空格，将第二个空格的位置与第一个空格的位置相减再减1就得到了返回值。与此种情况适用于最后一个单词被一对空格包住或者仅仅是单词+空格的情况，比如"hallo "
+3.但是上述情况都无法解决空格重复的情况，比如"hallo     "（后面带有多个空格），仔细思考后发现其实第一次检测可以把find_last_of(" ")改为更好的find_last_not_of(" ")这样子也保证了最后一个单词的存在，结合对单词前面的空格的检测，就能很轻松地得到最后一个单词了。但是注意有一个暗坑：如果没有空格，并且只有一个字母时，返回的下标是0，这个时候如果使用find_last_of(space, i - 1);进行空格探测是会因为-1而从最后一个位置开始检测的（注意在容器下标中是不可以使用-1的，但是此处应该是对size进行取模了），所以必须加上一个if检测。
+最后代码如下：
+```
+class Solution {
+public:
+    int lengthOfLastWord(string s) {
+		int len = s.size();
+		if (len == 0)
+			return 0;
+		string space = " ";
+		int i = s.find_last_not_of(space);
+		if (i == string::npos)
+			return 0;
+		else if (!i)
+			return 1;
+		int j = s.find_last_of(space, i - 1);
+		cout << i << " " << j << endl;
+		if (j == string::npos)
+			return i + 1;
+		else
+			return i - j; 
+    }
+};
+```
+其实细节还是蛮多的，比如如果找不到的时候，返回的下标可不是0或者-1，而是string::nops，这个值最好不要直接进行输出，用于比较就好，然后名字域是在string而不是std
+
+然后贴一个网友题解，其实现是和我的想法一致的，只是我用的是封装好的string库函数，而网友的是完整的实现：
+> 思路
+> 标签：字符串遍历
+> 从字符串末尾开始向前遍历，其中主要有两种情况
+> 第一种情况，以字符串"Hello World"为例，从后向前遍历直到遍历到头或者遇到空格为止，即为最后一个单词"World"的长度5
+> 第二种情况，以字符串"Hello World "为例，需要先将末尾的空格过滤掉，再进行第一种情况的操作，即认为最后一个单词为"World"，长度为5
+> 所以完整过程为先从后过滤掉空格找到单词尾部，再从尾部向前遍历，找到单词头部，最后两者相减，即为单词的长度
+> 时间复杂度：O(n)，n为结尾空格和结尾单词总体长度
+代码
+```
+JavaJavaScript
+class Solution {
+    public int lengthOfLastWord(String s) {
+        int end = s.length() - 1;
+        while(end >= 0 && s.charAt(end) == ' ') end--;
+        if(end < 0) return 0;
+        int start = end;
+        while(start >= 0 && s.charAt(start) != ' ') start--;
+        return end - start;
+    }
+}
+```
