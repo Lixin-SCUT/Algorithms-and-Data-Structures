@@ -1,0 +1,94 @@
+> 实现 strStr() 函数。
+> 
+> 给定一个 haystack 字符串和一个 needle 字符串，在 haystack 字符串中找出 needle 字符串出现的第一个位置 (从0开始)。如果不存在，则返回  -1。
+> 示例 1:
+> 输入: haystack = "hello", needle = "ll"
+> 输出: 2
+> 示例 2:
+> 输入: haystack = "aaaaa", needle = "bba"
+> 输出: -1
+> 说明:
+> 
+> 当 needle 是空字符串时，我们应当返回什么值呢？这是一个在面试中很好的问题。
+> 对于本题而言，当 needle 是空字符串时我们应当返回 0 。这与C语言的 strstr() 以及 Java的 indexOf() 定义相符。
+> 
+
+这道题刚好是《大话数据结构》中串章节介绍的KMP模式匹配算法，首先我来实现一下最简单的暴力逐位匹配法：
+```
+class Solution {
+public:
+    int strStr(string haystack, string needle) {
+        int lenh=haystack.size();
+        int lenn=needle.size();
+        if(lenh<lenn)
+            return -1;
+        if(!lenn)
+            return 0;
+        for(int i=0;i<lenh-lenn+1;++i)
+            for(int j=0;j<lenn;++j){
+                if(haystack[i+j]!=needle[j])
+                    break;
+                if(j==lenn-1)
+                    return i;
+            }
+        return -1;    
+    }
+};
+```
+暴力法没啥可以担心的，基本测试用例过了，整个都可以通过了，有趣的是leetcode居然显示0ms击败了100%hhh（C++天下第一！）
+然后后面来看一下KMP模式匹配算法吧
+```
+class Solution {
+public:
+  
+void get_nextval(string &t, vector<int> &nextval) {
+	int i, j;
+	i = 0;
+	j = -1;
+	nextval[0] = -1;
+	while (i < t.size()-1) {
+		if (j == -1 || t[i] == t[j]) {
+			++i, ++j;
+			if (t[i] != t[j])
+				nextval[i] = j;
+			else
+				nextval[i] = nextval[j];
+		}
+		else
+			j = nextval[j] ;
+	}
+}
+
+int Index_KPM(string s, string t) {
+	int i = 0;
+	int j = 0;
+	vector<int> nextval(t.size());
+	get_nextval(t, nextval);
+	while (i<s.size() && j<int(t.size())) {
+		if (j == -1 || s[i] == t[j]) {
+			++j, ++i;
+		}
+		else {
+			j = nextval[j];
+		}
+	}
+	if (j >= t.size())
+		return i - t.size();
+	else
+		return -1;
+}
+
+    
+    int strStr(string haystack, string needle) {
+        int lenh=haystack.size();
+        int lenn=needle.size();
+        if(lenh<lenn)
+            return -1;
+        if(!lenn)
+            return 0;
+        return Index_KPM(haystack,needle);
+    }
+};
+```
+这里有一个比较蛋疼的地方，大话数据结构中字符串下标0用于存储字符串的长度，所以上述的0相应地换成-1的话是处于一个不合法的状态，而因为j可能处于负数的状态，所以是不可以直接和字符串的size（）返回值进行比较的，因为size返回的是无符号数，和负数强行比较的话会隐式转换把负数变成很大的正数，从而导致一直无法进入循环，但是此时编译器是不会报任何错误的。
+这里的话建议结合大话数据结构和leetcode上的题解来理解，大话的问题在于很抽象，对用于回退的next数组的含义解释得比较抽象，但是非常好的是循序渐进，先说了next再说nextval这两种递进的情况。然后leetcode题解的好处在与利用有限状态机这个概念解释清楚了next数组直接跳转的含义，比如 ababaaaba对应于011234224（注意大话原文中的下标0用于存储数组长度，所以这里的0其实应该对应于-1），第三个a如果不匹配的话就跳回到3的状态，结合大话的解释就解决了题解中的概念不清晰的问题，两者刚好相辅相成。
