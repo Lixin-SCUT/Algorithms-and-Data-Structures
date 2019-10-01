@@ -1,0 +1,39 @@
+> 给定一个赎金信 (ransom) 字符串和一个杂志(magazine)字符串，判断第一个字符串ransom能不能由第二个字符串magazines里面的字符构成。如果可以构成，返回 true ；否则返回 false。
+> (题目说明：为了不暴露赎金信字迹，要从杂志上搜索各个需要的字母，组成单词来表达意思。)
+> 
+> 注意：
+> 你可以假设两个字符串均只含有小写字母。
+> 
+> canConstruct("a", "b") -> false
+> canConstruct("aa", "ab") -> false
+> canConstruct("aa", "aab") -> true
+> 
+> 来源：力扣（LeetCode）
+> 链接：https://leetcode-cn.com/problems/ransom-note
+> 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+> 
+
+这一次是我第一次正式吐槽题目，其实题目的出发点是好的，但是题目描述非常烂，第一次我以为是在第二个字符串中只要包含了第一字符串的字母就vans了，上来就是一个set完事，结果发现第二个例程无法通过。本来以为是必须按要求的顺序，百思不得其解就看了网友题解，才明白原来是第二个数组中的每个字母只能用一次，wtf写个赎金信还要求字母不得重复的吗？
+算了算了，其实方法和上一题重复字符的官方题解就很相似，使用map并记录次数，对于第一个字符串中的相应字符进行递减，低于0的就返回false
+题解如下，这一次第一次没有官方题解也没有比较好的网友题解，然后leetcode日常歧视关联容器，耗费时间永远不低。
+```
+class Solution {
+public:
+    bool canConstruct(string ransomNote, string magazine) {
+        map<char,int> alpha;
+        for(auto c:magazine){
+            if(!alpha.insert(make_pair(c,1)).second)
+                ++alpha[c];
+        }        
+        for(auto c:ransomNote)
+            if(!alpha.count(c))
+                return false;
+            else if(alpha[c]>0)
+                --alpha[c];
+            else
+                return false;
+        return true;
+        
+    }
+};
+```
