@@ -1,0 +1,51 @@
+> 给定一个字符串，逐个翻转字符串中的每个单词。
+> 
+> 示例 1：
+> 输入: "the sky is blue"
+> 输出: "blue is sky the"
+> 示例 2：
+> 输入: "  hello world!  "
+> 输出: "world! hello"
+> 解释: 输入字符串可以在前面或者后面包含多余的空格，但是反转后的字符不能包括。
+> 示例 3：
+> 输入: "a good   example"
+> 输出: "example good a"
+> 解释: 如果两个单词间有多余的空格，将反转后单词间的空格减少到只含一个。
+> 
+> 来源：力扣（LeetCode）
+> 链接：https://leetcode-cn.com/problems/reverse-words-in-a-string
+> 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+这道题一开始没看清楚，上来就是想直接reverse，结果输出一直很奇怪，才发现是将单词的位置进行翻转，而单词内部不需要进行翻转（当然输出错误的主要原因也在于我一直把s当作space拿去匹配了...）
+这个整体还是和前一题一样，对元素进行翻转，但是这一次需要自己进行元素的搜索，所以可以看作[反转字符串](https://lixin-ee.github.io/post/zi-fu-chuan-344fan-zhuan-zi-fu-chuan/)和[最后一个单词的长度](https://lixin-ee.github.io/post/zi-fu-chuan-58-zui-hou-yi-ge-dan-ci-de-chang-du/)这两道题的结合吧。
+但是因为这一次没有对空间复杂度作出要求，所以我直接使用了额外的字符串进行保存。一开始老是没想起来怎么插入比较好，然后翻阅了笔记发现append这个函数最适合，比较类似可以设置范围的push_back，注意string的push_back只能以单个字符char作为参数的！然后还需要注意的是append参数的迭代器范围都是左闭右开的，所以右边的迭代器还需要额外+1.剩下的就是判断和空格插入的世纪问题了。
+最后结果如下：
+```
+class Solution {
+public:
+    string reverseWords(string s) {
+        int len=s.size();
+        string space=" ";
+        if(len==0)
+            return s;
+        string s_copy;
+        int beg=s.find_last_not_of(space);
+        int end=s.find_last_of(space,beg);
+        while(beg!=string::npos){
+            cout<<beg<<" "<<end<<endl;
+            if(end==string::npos){
+                s_copy.append(s.begin(),s.begin()+beg+1);
+                break;
+            }
+            else
+                 s_copy.append(s.begin()+end+1,s.begin()+beg+1);
+            beg=s.find_last_not_of(space,end);
+            end=s.find_last_of(space,beg);
+            if(beg!=string::npos)
+                s_copy.push_back(' ');
+        }
+        return s_copy;
+    } 
+};
+```
+然后来考虑原地算法，原地算法的难点不在反转，反转其实可以考虑[数组189 旋转数组](https://lixin-ee.github.io/post/shu-zu-189xuan-zhuan-shu-zu/)，先对数组整体进行reverse，再对单个单词进行reverse。难点在于如何检测并去除多余的空格，我看了一下网友题解，基本是将元素进行移动或者将首尾的空格无视掉（使用substr），还是牺牲一点空间舒服一点啊hhh
