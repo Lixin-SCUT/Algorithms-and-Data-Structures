@@ -1,0 +1,34 @@
+> 编写一个函数，以字符串作为输入，反转该字符串中的元音字母。
+> 
+> 示例 1:
+> 输入: "hello"
+> 输出: "holle"
+> 示例 2:
+> 输入: "leetcode"
+> 输出: "leotcede"
+> 说明:
+> 元音字母不包含字母"y"。
+> 
+> 来源：力扣（LeetCode）
+> 链接：https://leetcode-cn.com/problems/reverse-vowels-of-a-string
+> 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+这道题也是简单题（因为上一道中等题被锁了...）这道题的位置其实可以放在前面一点，用的方法也是比较简单，主要还是使用find_first_of和find_last_of 主要需要注意的点还是重新搜索的点必须是left+1和right-1，否则会原地打转。
+然后来复习一下fin_first_of吧，在stl源码剖析中使用的是迭代器的版本，返回的也是最简单的迭代器。然后其内部实现其实时间复杂度是`o(n*m)`，其中m是vowel的长度，内部是两次迭代，所以看起来程序很简单，但是其实花的时间也不少。
+看了一下网友题解，基本都是使用 set和双指针的结合，其实就和我这个思路一致了。
+```
+class Solution {
+public:
+    string reverseVowels(string s) {
+        string vowel="aeiouAEIOU";
+        int left=s.find_first_of(vowel);
+        int right=s.find_last_of(vowel);
+        while(left!=string::npos&&right!=string::npos&&left<right){
+            swap(s[left],s[right]);
+            left=s.find_first_of(vowel,left+1);
+            right=s.find_last_of(vowel,right-1);
+        }
+        return s;
+    }
+};
+```
