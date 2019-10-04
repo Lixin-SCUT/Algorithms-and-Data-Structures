@@ -1,0 +1,66 @@
+> 给定两个字符串 s 和 t，判断它们是否是同构的。
+> 如果 s 中的字符可以被替换得到 t ，那么这两个字符串是同构的。
+> 所有出现的字符都必须用另一个字符替换，同时保留字符的顺序。两个字符不能映射到同一个字符上，但字符可以映射自己本身。
+> 
+> 示例 1:
+> 输入: s = "egg", t = "add"
+> 输出: true
+> 示例 2:
+> 输入: s = "foo", t = "bar"
+> 输出: false
+> 示例 3:
+> 输入: s = "paper", t = "title"
+> 输出: true
+> 
+> 来源：力扣（LeetCode）
+> 链接：https://leetcode-cn.com/problems/isomorphic-strings
+> 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+这道题也是简单题，第一感觉就是使用哈希map，但是有个细节问题需要解决，题目描述得不够清楚，下面通过我的几次错误提交来分析吧
+第一方案：一个map stot
+只使用一个map从s映射到t，但此时是无法保存t中的情况，所以错误的测试用例是"ab"-"aa"，因为对于s来说两个都是不同元素，但是t中则是相同的元素
+第二方案：使用map同时记录s-t和t-s，这时有个问题是如果s中的a对应t中的b，那t中的a需不需要对应s中的b呢？这里我首先猜测是需要的，所以将所有字符对映射到map中，然后也出现了错误测试用例"ab"-"bc"，说明是这个映射是分离的
+最终方案：那就无话可说啦，必须上两个map了，代码如下：
+```
+class Solution {
+public:
+    bool isIsomorphic(string s, string t) {
+        int lens=s.size(),lent=t.size();
+        if(lens!=lent)
+            return false;
+        if(!lens)
+            return true;
+        map<char,char> stot;
+        map<char,char> ttos;
+        for(int i=0;i<lens;++i){
+            if(stot.count(s[i])||ttos.count(t[i])){
+                if(t[i]!=stot[s[i]]||s[i]!=ttos[t[i]])
+                    return false;
+            }
+            else{
+                stot.insert(make_pair(s[i],t[i]));
+                ttos.insert(make_pair(t[i],s[i]));
+            }
+        }
+        return true;
+    }
+};
+```
+
+然后网友题解中有一个很秀的操作，向我们诠释了为啥这是一道简单题：
+> 同构代表两个字符串中每个位置上字符在自身第一次出现的索引相同
+
+这就很简单了，太秀了吧！
+```
+class Solution {
+public:
+    bool isIsomorphic(string s, string t) {
+       if(s.size()!=t.size())
+            return false;
+       for(int i=0;i<s.size();++i)
+           if(s.find(s[i])!=t.find(t[i]))
+               return false;
+        return true;
+    }
+};
+```
