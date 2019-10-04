@@ -1,0 +1,58 @@
+> 给定一种规律 pattern 和一个字符串 str ，判断 str 是否遵循相同的规律。
+> 这里的 遵循 指完全匹配，例如， pattern 里的每个字母和字符串 str 中的每个非空单词之间存在着双向连接的对应规律。
+> 
+> 示例1:
+> 输入: pattern = "abba", str = "dog cat cat dog"
+> 输出: true
+> 示例 2:
+> 输入:pattern = "abba", str = "dog cat cat fish"
+> 输出: false
+> 
+> 来源：力扣（LeetCode）
+> 链接：https://leetcode-cn.com/problems/word-pattern
+> 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+又是一道让我无力吐槽的题目翻译，也太抽象了吧，真的是逼得我去看题解才看得明白
+> 首先要正确理解题目的意思，举例说明：
+> pattern = "abba", str = "dog cat cat dog"
+> 意思是a->dog,b->cat,由于a！=b,所以dog也应该!=cat，满足返回true；
+
+这就很明显了，其实和昨天的题[同构字符串]()是一模一样的思路，只是最好先把str中的单词抽出来放到`vector<string>`里面，和Java等语言不同，c++没有按空格分割string单词的函数，只能自己分割一下了，然后就两种方法，昨天已经实现了map的方法，今天就来实现下下标检查法吧：
+```
+class Solution {
+public:
+    bool canConstruct(string ransomNote, string magazine) {
+        map<char,int> alpha;
+        for(auto c:magazine){
+            if(!alpha.insert(make_pair(c,1)).second)
+                ++alpha[c];
+        }        
+        for(auto c:ransomNote)
+            if(!alpha.count(c))
+                return false;
+            else if(alpha[c]>0)
+                --alpha[c];
+            else
+                return false;
+        return true;
+        
+    }
+};
+```
+主要注意的点就在于string分割，特别是最后一个单词，必须考虑只有一个单词的情况，所以必须引入temp，然后将最后一个单词的提取放到循环外。
+然后我的string分割可能复杂了一点，网友题解中有一个不错的贴上了供日后参考：
+```
+// 分割字符串
+vector<string> words;
+string s;
+for (int i = 0; i < str.size(); i++)
+    if (str[i] == ' ') {
+        if (s.size())
+            words.push_back(s);
+            s = "";
+    } else
+        s += str[i];
+
+if (s.size())
+    words.push_back(s);
+```
