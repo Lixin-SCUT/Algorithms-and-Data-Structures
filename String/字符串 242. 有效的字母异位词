@@ -1,0 +1,89 @@
+> 给定两个字符串 s 和 t ，编写一个函数来判断 t 是否是 s 的字母异位词。
+> 
+> 示例 1:
+> 输入: s = "anagram", t = "nagaram"
+> 输出: true
+> 示例 2:
+> 输入: s = "rat", t = "car"
+> 输出: false
+> 说明:
+> 你可以假设字符串只包含小写字母。
+> 
+> 来源：力扣（LeetCode）
+> 链接：https://leetcode-cn.com/problems/valid-anagram
+> 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+这道题也是简单题，非常适合用来夯实基础
+我一开始的思路是对于s每个存在的字母，都分别对s和t中该字母的数量进行count，注意顺序容器不像关联容器的count，没有自带的count，必须使用泛型算法中的count
+```
+class Solution {
+public:
+    bool isAnagram(string s, string t) {
+        int lens=s.size(),lent=t.size();
+        if(lens!=lent)
+            return false;
+        for(auto c:s)
+            if(count(s.begin(),s.end(),c)!=count(t.begin(),t.end(),c))
+                return false;
+        return true;
+    }
+};
+```
+提交的时候发现超时了，想想也是哦，count算法看起来很方便，其实背后是需要循环一遍字符串的，再加上外部的循环，等于时间复杂度位o(n^2)，实在不是一个好解法
+然后我想到了hashmap，可以先循环s，用map记录出现的单词和相应的次数，再循环t递减次数并监督是否有小于0的情况。但是后来转念一想，假设都是小写字母的话，一个大小为26的vector就足以应付了，所以得到代码如下
+```
+class Solution {
+public:
+    bool isAnagram(string s, string t) {
+        int lens=s.size(),lent=t.size();
+        if(lens!=lent)
+            return false;
+        vector<int> vi(26,0);
+        for(auto c:s)
+            ++vi[c-'a'];
+        for(auto c:t)
+            if(--vi[c-'a']<0)
+                return false;
+        return true;
+    }
+};
+```
+然后最后复习一遍快速排序吧，如果对空间复杂度有要求的话还是必须用快速排序，桶排序就不如前一种算法了。
+```
+class Solution {
+public:
+    bool isAnagram(string s, string t) {
+        int lens=s.size(),lent=t.size();
+        if(lens!=lent)
+            return false;
+        Qsort(0,s.size()-1,s);
+        Qsort(0,t.size()-1,t);
+        if(s!=t)
+            return false;
+        return true;
+    }
+    
+    void Qsort(int beg,int end,string &s){
+        if(beg<end){
+         int middle=partition(beg,end,s);
+         Qsort(beg,middle-1,s);
+         Qsort(middle+1,end,s);
+        }
+    }
+    
+    int partition(int beg,int end,string &s){
+        int flag=s[beg];
+        while(beg<end){
+            while(beg<end&&s[end]>=flag)
+                --end;
+            swap(s[beg],s[end]);
+            while(beg<end&&s[beg]<=flag)
+                ++beg;
+            swap(s[beg],s[end]);
+        }
+        return beg;
+    }
+};
+```
+快速排序有不少需要注意的地方，比如判断条件的设置和返回值的设置。
+最后看了一下官方题解，和我的思路一致。
