@@ -1,0 +1,197 @@
+难度 困难
+```
+将非负整数转换为其对应的英文表示。可以保证给定输入小于 2^31 - 1 。
+
+示例 1:
+输入: 123
+输出: "One Hundred Twenty Three"
+示例 2:
+输入: 12345
+输出: "Twelve Thousand Three Hundred Forty Five"
+示例 3:
+输入: 1234567
+输出: "One Million Two Hundred Thirty Four Thousand Five Hundred Sixty Seven"
+示例 4:
+输入: 1234567891
+输出: "One Billion Two Hundred Thirty Four Million Five Hundred Sixty Seven Thousand Eight Hundred Ninety One"
+
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/integer-to-english-words
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+```
+
+这道题一开始还是蛮难的，我的初步想法是依靠英文数字的特性，把数字切割为每三位的格式，再添加每三位之间的词。
+但是由于数字和字符串两者都不好从左到右处理位数的问题，所以我首先把数字转为字符串，然后补全到3的倍数，再进行切割，以逆序放入vector，比如123456789，最后得到{"789","456","123"}
+然后进行循环，对每个部分进行翻译和添加词汇
+先把最后代码放出来吧
+```
+class Solution {
+public:
+#include <iostream>
+    string numberToWords(int num) {
+        if(!num)
+            return "Zero";
+        string num_s=to_string(num);
+        int len=num_s.size();
+        vector<string> units{""," Thousand"," Million"," Billion"};
+        vector<string> bits{" One"," Two"," Three"," Four"," Five"," Six"," Seven"," Eight"," Nine"};
+        vector<string> tens_sp{" Ten"," Eleven"," Twelve"," Thirteen"," Fourteen"," Fifteen"," Sixteen"," Seventeen"," Eighteen"," Nineteen"};
+        vector<string> tens{" Twenty"," Thirty"," Forty"," Fifty"," Sixty"," Seventy"," Eighty"," Ninety"};
+        int time=len/3;
+        if(time*3<len){
+            ++time;    
+            while(len<time*3)
+                num_s="0"+num_s,++len;    
+        }
+        vector<string> three_part;
+        while(time>0)
+            three_part.push_back(num_s.substr(--time*3,3));
+        string res;
+        for(int i=0;i<three_part.size();++i){
+            string temp;
+            if(stoi(three_part[i])==0)
+                     continue;
+             if(three_part[i][0]!='0'){
+                temp+=bits[three_part[i][0]-'1']+" Hundred";
+             }
+             if(three_part[i][1]!='0'){
+                 if(three_part[i][1]=='1'){
+                     temp+=tens_sp[three_part[i][2]-'0']+units[i];
+                     res=temp+res;
+                     continue;
+                 } 
+                 temp+=tens[three_part[i][1]-'2'];
+             }
+             if(three_part[i][2]!='0')
+                 temp+=bits[three_part[i][2]-'1'];
+            res=temp+units[i]+res;
+        }   
+        return res.substr(1,res.size()-1);
+    }
+};
+```
+然后说一下遇到的问题
+1.空格的问题，一开始被空格弄得有点头疼，因为一种情况是整十的数，可能会在最后面出现一个多余的空格。最后的处理办法是统一在前面或者后面添加空格，然后再去掉
+2.某段数字整体为空，此时需要加上一个判断` if(stoi(three_part[i])==0)`跳过这一整段，否则会添加多余的Thousand或者Billion
+
+然后来看一下官方题解吧：
+> 方法：分治
+> 我们将这个问题分解成一系列子问题。例如，对于数字 1234567890，我们将它从低位开始每三个分成一组，得到 1,234,567,890，它的英文表示为 1 Billion 234 Million 567 Thousand 890。这样我们就将原问题分解成若干个三位整数转换为英文表示的问题了。
+> 
+> 接下来，我们可以继续将三位整数分解，例如数字 234 可以分别成百位 2 和十位个位 34，它的英文表示为 2 Hundred 34。这样我们继续将原问题分解成一位整数和两位整数的英文表示。其中一位整数的表示是很容易的，而两位整数中除了 10 到 19 以外，其余整数的的表示可以分解成两个一位整数的表示，这样问题就被圆满地解决了。
+> 
+```
+class Solution {
+    public String one(int num) {
+        switch(num) {
+            case 1: return "One";
+            case 2: return "Two";
+            case 3: return "Three";
+            case 4: return "Four";
+            case 5: return "Five";
+            case 6: return "Six";
+            case 7: return "Seven";
+            case 8: return "Eight";
+            case 9: return "Nine";
+        }
+        return "";
+    }
+
+    public String twoLessThan20(int num) {
+        switch(num) {
+            case 10: return "Ten";
+            case 11: return "Eleven";
+            case 12: return "Twelve";
+            case 13: return "Thirteen";
+            case 14: return "Fourteen";
+            case 15: return "Fifteen";
+            case 16: return "Sixteen";
+            case 17: return "Seventeen";
+            case 18: return "Eighteen";
+            case 19: return "Nineteen";
+        }
+        return "";
+    }
+
+    public String ten(int num) {
+        switch(num) {
+            case 2: return "Twenty";
+            case 3: return "Thirty";
+            case 4: return "Forty";
+            case 5: return "Fifty";
+            case 6: return "Sixty";
+            case 7: return "Seventy";
+            case 8: return "Eighty";
+            case 9: return "Ninety";
+        }
+        return "";
+    }
+
+    public String two(int num) {
+        if (num == 0)
+            return "";
+        else if (num < 10)
+            return one(num);
+        else if (num < 20)
+            return twoLessThan20(num);
+        else {
+            int tenner = num / 10;
+            int rest = num - tenner * 10;
+            if (rest != 0)
+              return ten(tenner) + " " + one(rest);
+            else
+              return ten(tenner);
+        }
+    }
+
+    public String three(int num) {
+        int hundred = num / 100;
+        int rest = num - hundred * 100;
+        String res = "";
+        if (hundred * rest != 0)
+            res = one(hundred) + " Hundred " + two(rest);
+        else if ((hundred == 0) && (rest != 0))
+            res = two(rest);
+        else if ((hundred != 0) && (rest == 0))
+            res = one(hundred) + " Hundred";
+        return res;
+    }
+
+    public String numberToWords(int num) {
+        if (num == 0)
+            return "Zero";
+
+        int billion = num / 1000000000;
+        int million = (num - billion * 1000000000) / 1000000;
+        int thousand = (num - billion * 1000000000 - million * 1000000) / 1000;
+        int rest = num - billion * 1000000000 - million * 1000000 - thousand * 1000;
+
+        String result = "";
+        if (billion != 0)
+            result = three(billion) + " Billion";
+        if (million != 0) {
+            if (! result.isEmpty())
+                result += " ";
+            result += three(million) + " Million";
+        }
+        if (thousand != 0) {
+            if (! result.isEmpty())
+                result += " ";
+            result += three(thousand) + " Thousand";
+        }
+        if (rest != 0) {
+            if (! result.isEmpty())
+                result += " ";
+            result += three(rest);
+        }
+        return result;
+    }
+}
+```
+> 复杂度分析
+> 
+> 时间复杂度：O(N)。其中 N 是输入整数的长度。由于输出的英文表示长度和输入整数的长度是成正比的，因此时间复杂度为 O(N)。
+> 空间复杂度：O(1)。
+> 
+
+hhh虽然我的也有分治法的影子，但是它的优雅好多啊，特别是把三位数字分开处理。
