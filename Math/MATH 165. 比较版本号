@@ -1,0 +1,121 @@
+> 比较两个版本号 version1 和 version2。
+> 如果 version1 > version2 返回 1，如果 version1 < version2 返回 -1， 除此之外返回 0。
+> 你可以假设版本字符串非空，并且只包含数字和 . 字符。
+ > . 字符不代表小数点，而是用于分隔数字序列。
+> 例如，2.5 不是“两个半”，也不是“差一半到三”，而是第二版中的第五个小版本。
+> 你可以假设版本号的每一级的默认修订版号为 0。例如，版本号 3.4 的第一级（大版本）和第二级（小版本）修订号分别为 3 和 4。其第三级和第四级修订号均为 0。
+> 
+> 示例 1:
+> 输入: version1 = "0.1", version2 = "1.1"
+> 输出: -1
+> 示例 2:
+> 输入: version1 = "1.0.1", version2 = "1"
+> 输出: 1
+> 示例 3:
+> 输入: version1 = "7.5.2.4", version2 = "7.5.3"
+> 输出: -1
+> 示例 4：
+> 输入：version1 = "1.01", version2 = "1.001"
+> 输出：0
+> 解释：忽略前导零，“01” 和 “001” 表示相同的数字 “1”。
+> 示例 5：
+> 输入：version1 = "1.0", version2 = "1.0.0"
+> 输出：0
+> 解释：version1 没有第三级修订号，这意味着它的第三级修订号默认为 “0”。
+>  
+> 提示：
+> 版本字符串由以点 （.） 分隔的数字字符串组成。这个数字字符串可能有前导零。
+> 版本字符串不以点开始或结束，并且其中不会有两个连续的点。
+> 
+> 来源：力扣（LeetCode）
+> 链接：https://leetcode-cn.com/problems/compare-version-numbers
+> 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+> 
+
+一开始的想法是先分析一下难点
+1.靠点号分割的话，位数不同
+2.会有前导0
+然后思考一下处理方式
+1.利用find函数进行点号分割，分割之后可以当场进行对比，或者存进容器里面进行对比。前者需要对首先对长度进行对比，后者的话可以通过push_back来补充位数
+2.前导0的处理方法 一个是find函数检测并去掉多余的0，一个是转化为int自动去掉，最后一个则是在对应的数前面补0，比如02和1对比，就向1补0，使得02和01对比。
+最后为了代码的可读性，我选择了vector补位+补0
+```
+class Solution {
+public:
+    int compareVersion(string version1, string version2) {
+        vector<string> v1,v2;
+        split(version1,v1);
+        split(version2,v2);
+        int len=0;
+        if(v1.size()>v2.size()){
+            len=v1.size()-v2.size();
+            while(len)
+                --len,v2.push_back("0");
+        }
+        else{
+            len=v2.size()-v1.size();
+            while(len)
+                --len,v1.push_back("0");
+        }
+        for(int i=0;i<v1.size();++i ){
+            if(v1[i].size()>v2[i].size()){
+                 len=v1[i].size()-v2[i].size();;
+                 while(len)
+                    --len,v2[i]="0"+v2[i];
+             }
+              else{
+                 len=v2[i].size()-v1[i].size();
+                 while(len)
+                    --len,v1[i]="0"+v1[i];
+             }
+            if(v1[i]>v2[i])
+                return 1;
+            else if (v1[i]<v2[i])
+                return -1;
+        }
+            
+          return 0;        
+    }
+    
+    void split(string &version,vector<string> &v){
+        char comma='.';
+        for(int i=0;i<version.size();){
+            int j=version.find(comma,i);
+            if(j==string::npos){
+                v.push_back(version.substr(i,version.size()-i));
+                break;
+            }              
+            v.push_back(version.substr(i,j-i));
+            i=j+1;
+        }
+    }   
+};
+```
+这道题有个很明显的问题是代码比较臃肿，重复代码太多，所以我把分割操作合成一个函数了，可读性明显高了很多
+然后高赞网友题解都类似，都是点号分解
+最后是有个比较秀的操作：
+```
+class Solution {
+public:
+    int compareVersion(string version1, string version2) {
+        char c;
+        int v1,v2;
+        istringstream its1(version1);
+        istringstream its2(version2);
+        
+        while(bool(its1>>v1) + bool(its2>>v2)){
+            if(v1>v2) return 1;
+            if(v1<v2) return -1;
+            
+            v1=0;
+            v2=0;
+            its1>>c;
+            its2>>c;
+            
+        }
+        
+        return 0;
+    }
+};
+```
+注意是把 istringstream 强行输入赋值给int，此时输入流会强制读取一个符合int格式的string值，所以输入流会以点号为结束符，并且将其自动转化为int类型，也就同时完成了分割和去掉前置0两个任务，所以代码非常简单，只是需要仔细研究一下才好。
