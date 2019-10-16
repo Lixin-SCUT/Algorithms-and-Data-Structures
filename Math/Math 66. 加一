@@ -1,0 +1,75 @@
+难度：简单
+```
+给定一个由整数组成的非空数组所表示的非负整数，在该数的基础上加一。
+最高位数字存放在数组的首位， 数组中每个元素只存储单个数字。
+你可以假设除了整数 0 之外，这个整数不会以零开头。
+
+示例 1:
+输入: [1,2,3]
+输出: [1,2,4]
+解释: 输入数组表示数字 123。
+示例 2:
+输入: [4,3,2,1]
+输出: [4,3,2,2]
+解释: 输入数组表示数字 4321。
+
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/plus-one
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+```
+这道题的难点在于：如果遇到个位为9的情况，需要置为0并向前进位，同时如果遇到全部位数为9的情况，则需要全部位数置为0，并在vector前面新增一位1。
+解决思路：单独判断特殊情况，以个位为9作为判断条件，不断向前递推直到遇到不为9的数，如果全部为9，则插入1并返回，其他情况可直接返回
+代码如下
+```
+class Solution {
+public:
+    vector<int> plusOne(vector<int> digits) {
+        bool flag=false;
+        int len=digits.size();
+        if(digits[len-1]==9){
+            auto i=digits.rbegin();
+            while(i<digits.rend()&&*i==9){
+                *i=0;
+                ++i;
+            }
+            if(i==digits.rend())  
+                digits.insert(digits.begin(),1); 
+            else
+                ++*i;
+            return digits;
+        }
+        digits[len-1]+=1;
+        return digits;
+    }
+};
+```
+其中遇到的难点和注意点：
+1.反向迭代器是无法进行insert插入操作的， digits.insert(digits.rend(),1);是无法通过编译的，reverse iterator并不属于五种迭代器类型之一
+2.`(i<digits.rend()&&*i==9)`判断条件的先后顺序很重要，如果反过来的话就会造成解引用未知指针的危险操作。
+3.临时对象的创建 是在类型后面加上括号，括号内再加入初始值调用构造函数，`plusOne(vector<int> ( {1,2,3,4} )) `
+
+最后是网友题解：
+> 根据题意加一，没错就是加一这很重要，因为它是只加一的所以有可能的情况就只有两种：
+> 1.除 9 之外的数字加一；
+> 2.数字 9
+> 加一得十进一位个位数为 0 加法运算如不出现进位就运算结束了且进位只会是一。
+> 
+> 所以只需要判断有没有进位并模拟出它的进位方式，如十位数加 11 个位数置为 00，如此循环直到判断没有再进位就退出循环返回结果。
+> 
+> 然后还有一些特殊情况就是当出现 9999、999999 之类的数字时，循环到最后也需要进位，出现这种情况时需要手动将它进一位。
+```
+Java
+class Solution {
+    public int[] plusOne(int[] digits) {
+        for (int i = digits.length - 1; i >= 0; i--) {
+            digits[i]++;
+            digits[i] = digits[i] % 10;
+            if (digits[i] != 0) return digits;
+        }
+        digits = new int[digits.length + 1];
+        digits[0] = 1;
+        return digits;
+    }
+}
+```
+优雅很多hhh，值得学习
