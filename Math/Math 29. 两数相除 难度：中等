@@ -1,0 +1,192 @@
+> 给定两个整数，被除数 dividend 和除数 divisor。将两数相除，要求不使用乘法、除法和 mod 运算符。
+> 返回被除数 dividend 除以除数 divisor 得到的商。
+> 
+> 示例 1:
+> 输入: dividend = 10, divisor = 3
+> 输出: 3
+> 示例 2:
+> 输入: dividend = 7, divisor = -3
+> 输出: -2
+> 说明:
+> 
+> 被除数和除数均为 32 位有符号整数。
+> 除数不为 0。
+> 假设我们的环境只能存储 32 位有符号整数，其数值范围是 [−2^31,  2^31 − 1]。本题中，如果除法结果溢出，则返回 2^31 − 1。
+> 
+> 来源：力扣（LeetCode）
+> 链接：https://leetcode-cn.com/problems/divide-two-integers
+> 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+> 
+
+难点和要点：
+1.如何实现除法并且不超时
+2.溢出的处理，主要在于-2^31除以-1的问题
+我的思路
+1.暴力法 或者 模仿传统的竖式除法，但是后者我没有想到应该如何进行从左往右提取数字（不能使用除法）
+2.关于溢出的处理，我的想法是设置int标志位，将被除数和除数都化为负数，此时只需要对-2^31除以-1进行特殊判断，然后最后根据int标志位来对结果取负。
+
+暴力法代码：
+```
+class Solution {
+public:
+    int divide(int dividend, int divisor) {
+        int flag=0;
+        if(dividend>0){
+            dividend=-dividend;
+            ++flag;
+        }
+        if(divisor>0){ divisor=-divisor; ++flag; }
+        int res=0;
+        while(dividend<=divisor){
+            dividend-=divisor;
+            if(res==INT_MAX){
+                if(flag==0)
+                    return INT_MAX;
+                else
+                    return INT_MIN;
+            }
+            ++res;
+        }
+        if(flag==1)
+            return -res;
+        return res;
+    }
+};
+```
+最后暴力法还是白给了，2^32除以1超时了
+
+所以直接看下网友题解：
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1571663112931.png)
+代码：
+```
+def divide(self, dividend: int, divisor: int) -> int:
+    sign = (dividend > 0) ^ (divisor > 0)
+    dividend = abs(dividend)
+    divisor = abs(divisor)
+    count = 0
+    #把除数不断左移，直到它大于被除数
+    while dividend >= divisor:
+        count += 1
+        divisor <<= 1
+    result = 0
+    while count > 0:
+        count -= 1
+        divisor >>= 1
+        if divisor <= dividend:
+            result += 1 << count #这里的移位运算是把二进制（第count+1位上的1）转换为十进制
+            dividend -= divisor
+    if sign: result = -result
+    return result if -(1<<31) <= result <= (1<<31)-1 else (1<<31)-1 
+```
+
+> 题解二：
+> 直接举个例子如果被除数 15，除数 3，用我们上面的方法要遍历 5 次。
+> 接下来，我们使用不断 增倍除数
+> 比如：
+> 被除数 除数
+> 15 3
+> 12 6
+> 6 12
+> 发现除数 大于 被除数大，再重现开始
+> 6 3
+> ...
+> 3 3
+> 虽然这个例子遍历次数相等，对于较大的数，可以减少时间复杂度。
+```
+class Solution {
+    public int divide(int dividend, int divisor) {
+        int sign = (dividend ^ divisor) >> 31;
+        long lDividend = Math.abs((long) dividend);
+        long lDivisor = Math.abs((long) divisor);
+        long res = 0;
+        while (lDividend >= lDivisor){
+            long tmp = lDivisor;
+            long i = 1;
+            while (lDividend >= tmp){
+                lDividend -= tmp;
+                res += i;
+                i <<= 1;
+                tmp <<= 1;
+            }
+        }
+        if (sign == -1) res *= -1;
+        if (res < Integer.MIN_VALUE) return Integer.MIN_VALUE;
+        else if (res > Integer.MAX_VALUE) return Integer.MAX_VALUE;
+        return (int)res;
+        
+    }
+}
+```
+注意本题被系统归纳为二分查找类别，其实题解二算是一个二分查找法的逆向思维，二分查找法是从大值不断划分到1，逆向则是不断递增到大值。
+```
+class Solution {
+    public int divide(int dividend, int divisor) {
+        /** 除数为零就返回-1 按照测试样例的要求写的*/
+        if (divisor==0)
+            return -1;
+        if (dividend==0)
+            return 0;
+        /** -2147483648, -1 这个测试样例的确没想到，结果翻车了*/
+        if (dividend==Integer.MIN_VALUE && divisor==-1)
+            return Integer.MAX_VALUE;
+        /** 符号位的处理参考了大佬的异或处理方法*/
+        boolean negetive= (dividend^ divisor)<0;
+        /** div_count 是当前divisor_tmp相对于divisor的倍数 */
+        int res=0, div_count=1;
+        /** 因为值溢出之后边界问题处理太繁琐了，直接将数值转为long省去麻烦 */
+        long dividend_tmp= Math.abs((long)dividend);
+        long divisor_tmp= Math.abs((long)divisor);
+        
+        /** 按标准的二分查找代码模板写的 */
+        while (dividend_tmp>= divisor_tmp) {
+            dividend_tmp-= divisor_tmp;
+            res+= div_count;
+            
+            if (dividend_tmp< Math.abs(divisor))
+                break;
+            
+            /** divisor_tmp无法倍增时，就将其初始化为divisor绝对值，重新开始下一轮倍增*/
+            if (dividend_tmp- divisor_tmp< divisor_tmp) {
+                divisor_tmp= Math.abs(divisor);
+                div_count=1;
+                continue;
+            } 
+            
+            /** 不断倍增divisor_tmp直到和dividend_tmp一样大*/
+            divisor_tmp+= divisor_tmp;
+            div_count+= div_count;
+        }
+        return negetive? 0-res: res;
+    }
+}
+```
+
+然后上述题解都是受边界问题影响，用long之类的其实是不合理的，我的改用负数计算反而还不错，题解中也有类似的
+```
+class Solution {
+    public int divide(int dividend, int divisor) {
+        boolean sign = (dividend > 0) ^ (divisor > 0);
+        int result = 0;
+        if(dividend>0) {
+            dividend = -dividend;
+        }
+        if(divisor>0) divisor = -divisor;
+        while(dividend <= divisor) {
+            int temp_result = -1;
+            int temp_divisor = divisor;
+            while(dividend <= (temp_divisor << 1)) {
+                if(temp_divisor <= (Integer.MIN_VALUE >> 1))break;
+                temp_result = temp_result << 1;
+                temp_divisor = temp_divisor << 1;
+            }
+            dividend = dividend - temp_divisor;
+            result += temp_result;
+        }
+        if(!sign) {
+            if(result <= Integer.MIN_VALUE) return Integer.MAX_VALUE;
+            result = - result;
+        }
+        return result;
+    }
+}
+```
