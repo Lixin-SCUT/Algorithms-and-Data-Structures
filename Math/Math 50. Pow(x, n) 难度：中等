@@ -1,0 +1,170 @@
+> 实现 pow(x, n) ，即计算 x 的 n 次幂函数。
+> 
+> 示例 1:
+> 输入: 2.00000, 10
+> 输出: 1024.00000
+> 示例 2:
+> 输入: 2.10000, 3
+> 输出: 9.26100
+> 示例 3:
+> 输入: 2.00000, -2
+> 输出: 0.25000
+> 解释: 2-2 = 1/22 = 1/4 = 0.25
+> 说明:
+> -100.0 < x < 100.0
+> n 是 32 位有符号整数，其数值范围是 [−2^31, 2^31 − 1] 。
+> 
+> 来源：力扣（LeetCode）
+> 链接：https://leetcode-cn.com/problems/powx-n
+> 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+> 
+
+要点难点：
+1.如果逐个相乘的暴力法肯定会超时
+2.n取INT_MIN的时候需要额外的处理
+3.需要将负号转化为导数
+我的思路
+1.既然不能逐个相乘，就利用这几题中都利用到的（逆向）二分法，每次递增一倍，比如 1 2 4 8...如果下一步翻倍的时候会大于n的话，就从1开始重新翻倍
+2.针对x为0，1的特例进行优化，同时在对n的负值进行处理的时候单独对INT_MIN进行预处理（先乘一次）
+3.优化点：如果有空间的话，可以用一个vector把之前计算的值存起来
+最后代码如下：
+```
+class Solution {
+public:
+    double myPow(double x, int n) {
+        if(x==0||x==1)
+            return x;
+        if(n==0)
+            return 1;
+        if(n<0){
+            x=1/x;
+            if(n==INT_MIN)
+                n=-(n+1),x*=x;
+            else
+                n=-n;
+        }
+
+        int i=1,j=1;
+        double res=x,temp=x;
+        while(j!=n){
+        do{
+            res*=temp;
+            temp*=temp;
+            j+=i;
+            i=2*i;  
+            }while(j<=n-i);          
+        i=1;
+        temp=x;
+        }
+        cout<<res<<endl;
+        return res;    
+    }
+};
+```
+
+最后来看官方题解和网友题解：
+> 方法：快速幂算法（递归）
+> 直观想法
+> 假定我们已经得到了 x ^ n的结果，我们如何得到 x ^ {2 * n}的结果？很明显，我们不需要将 x 再乘 n 次。使用公式 (x ^ n) ^ 2 = x ^ {2 * n}，我们可以在一次计算内得到 x ^ {2 * n} 的值。使用该优化方法，我们可以降低算法的时间复杂度。
+> 算法假定我们已经得到了 x ^ {n / 2}的结果，并且我们现在想得到 x ^ n的结果。我们令 A 是 x ^ {n / 2}的结果，我们可以根据 n 的奇偶性来分别讨论 x ^ n的值。如果 n 为偶数，我们可以用公式 (x ^ n) ^ 2 = x ^ {2 * n}来得到 x ^ n = A * A。如果 n 为奇数，那么 A * A = x ^ {n - 1} 。直观上看，我们需要再乘一次 xx ，即 x ^ n = A * A * x。该方法可以很方便的使用递归实现。我们称这种方法为 "快速幂"，因为我们只需最多 O(\log n)O(logn) 次运算来得到 x ^ n 。
+```
+class Solution {
+public:
+    double fastPow(double x, long long n) {
+        if (n == 0) {
+            return 1.0;
+        }
+        double half = fastPow(x, n / 2);
+        if (n % 2 == 0) {
+            return half * half;
+        } else {
+            return half * half * x;
+        }
+    }
+    double myPow(double x, int n) {
+        long long N = n;
+        if (N < 0) {
+            x = 1 / x;
+            N = -N;
+        }
+        return fastPow(x, N);
+    }
+};
+```
+> 复杂度分析
+> 时间复杂度：O(logn). 每一次我们使用公式 (x ^ n) ^ 2 = x ^ {2 * n}
+>  , n 都变为原来的一半。因此我们需要至多 O(logn) 次操作来得到结果。
+> 空间复杂度：O(logn). 每一次计算，我们需要存储 x ^ {n / 2} 的结果。 我们需要计算O(logn) 次，所以空间复杂度为 O(logn) 。
+> 
+> 同时网友提供的另一种二分思想递归：
+```
+class Solution {
+public:
+    double myPow(double x, int n) {
+        if (n == 0) { return 1; }
+        if (n == 1) { return x; }
+        if (n == -1) { return 1 / x; }
+        double half = myPow(x, n / 2);
+        double rest = myPow(x, n % 2);
+        double total = rest * half * half;
+        return total;
+    }
+};
+```
+
+> 另外一种移位的解法：
+> 先介绍快速幂：
+> 众所周知，如果我们要求a的n次方，最朴素的想法一定是把它们乘起来，这样的复杂度是O(n),显然太差了。
+> 然后我们想到一种优化，如果我们能求得 2的k次方=n的话，我们只需要将a的平方相乘k次，这样的复杂度是O(log2n)，但是我们很难找到这样的k。
+> 于是我们将这一想法再一次优化，我们只要能找到 2的k1次方+2的k2次方+...=n就好了，这样的复杂度还是O(log2n)
+> 这一想法可以通过数的二进制位运算轻易解决，比如9的二进制是1001，也就是从右往左数第i位，我们的答案就乘上a的2的i次方
+> 于是就有了一下算法
+```
+class Solution {
+public:
+    
+    double qpow(double a, long long b){
+        double res = 1;
+        while(b){
+            if(b&1) res = res*a;
+            b >>= 1;
+            a *= a;
+        }
+        return res;
+    }
+    
+  
+    double myPow(double x, long long n) {
+        if(n == 0) return 1;
+        if(n > 0) return qpow(x,n);
+        if(n < 0) return 1/qpow(x,-n);
+        return 1.0;
+    }
+};
+```
+另一种不需要移位的方法：
+```
+class Solution {
+public:
+    double myPow(double x, int n) {
+        long long N = n;
+        if (N < 0) {
+            x = 1 / x;
+            N = -N;
+        }
+        double ans = 1;
+        double current_product = x;
+        for (long long i = N; i ; i /= 2) {
+            if ((i % 2) == 1) {
+                ans = ans * current_product;
+            }
+            current_product = current_product * current_product;
+        }
+        return ans;
+    }
+};
+```
+复杂度分析
+时间复杂度：O(logn). 对每一个 n 的二进制位表示，我们都至多需要累乘 1 次，所以总的时间复杂度为 O(logn) 。
+空间复杂的：O(1). 我们只需要用到 2 个变量来保存当前的乘积和最终的结果 x 。
+
