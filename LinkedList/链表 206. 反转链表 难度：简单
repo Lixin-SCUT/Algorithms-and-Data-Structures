@@ -68,14 +68,46 @@ ListNode* reverseList(ListNode* head) {
     
 ```
 为了改变head的值我把head指针传了进去，但是！在递归回来的途中程序却吧head的值改回原值了？WTF？这个问题弄了一个早上也没弄懂，后面再研究一下
-先来看一下题解：
+
+10.27晚上更新：因为所谓的指针形参传递对于指针这个形参本身来说还是值传递！是复制了指针形参过去的！！只有对于指针指向的对象来说才是相当于引用传递，所以head的形参必须改成指针的引用 也就是*（&head）
+所以最终代码为
 ```
-方法一：迭代
-假设存在链表 1 → 2 → 3 → Ø，我们想要把它改成 Ø ← 1 ← 2 ← 3。
+class Solution {
 
-在遍历列表时，将当前节点的 next 指针改为指向前一个元素。由于节点没有引用其上一个节点，因此必须事先存储其前一个元素。在更改引用之前，还需要另一个指针来存储下一个节点。不要忘记在最后返回新的头引用！
+public:
+    ListNode* reverse_list(ListNode* (&head),ListNode* n,ListNode* n_next){
+        
+        if(n_next!=NULL){
+            reverse_list(head,n_next,n_next->next);
+            n_next->next=n;
+        }    
+        else{
+            head=n; 
+        }
+ 
+       return n;
+    }
 
-Java
+
+ListNode* reverseList(ListNode* head) {
+        if(head==NULL)
+            return NULL;
+        //ListNode *ln=head->next;
+        ListNode* n=reverse_list(head,head,head->next);
+        n->next=NULL;
+        return head;
+    }
+};
+```
+
+先来看一下题解：
+
+> 方法一：迭代
+> 假设存在链表 1 → 2 → 3 → Ø，我们想要把它改成 Ø ← 1 ← 2 ← 3。
+> 
+> 在遍历列表时，将当前节点的 next 指针改为指向前一个元素。由于节点没有引用其上一个节点，因此必须事先存储其前一个元素。在更改引用之前，还需要另一个指针来存储下一个节点。不要忘记在最后返回新的头引用！
+
+```
 public ListNode reverseList(ListNode head) {
     ListNode prev = null;
     ListNode curr = head;
@@ -87,14 +119,17 @@ public ListNode reverseList(ListNode head) {
     }
     return prev;
 }
-复杂度分析
-
-时间复杂度：O(n)，假设 nn 是列表的长度，时间复杂度是 O(n)。
-空间复杂度：O(1)
 ```
-方法二：递归
-递归版本稍微复杂一些，其关键在于反向工作。假设列表的其余部分已经被反转，现在我该如何反转它前面的部分？
+> 复杂度分析
+> 
+> 时间复杂度：O(n)，假设 nn 是列表的长度，时间复杂度是 O(n)。
+> 空间复杂度：O(1)
 
+> 方法二：递归
+> 递归版本稍微复杂一些，其关键在于反向工作。假设列表的其余部分已经被反转，现在我该如何反转它前面的部分？
+> 
+
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1572145652208.png)
 ```
 public ListNode reverseList(ListNode head) {
     if (head == null || head.next == null) return head;
@@ -104,13 +139,13 @@ public ListNode reverseList(ListNode head) {
     return p;
 }
 ```
-复杂度分析
-![](file://C:/Users/lab509/Documents/Gridea/post-images/1572145652208.png)
-时间复杂度：O(n)，假设 nn 是列表的长度，那么时间复杂度为O(n)。
-空间复杂度：O(n)，由于使用递归，将会使用隐式栈空间。递归深度可能会达到 n 层。
+> 复杂度分析
+> 
+> 时间复杂度：O(n)，假设 nn 是列表的长度，那么时间复杂度为O(n)。
+> 空间复杂度：O(n)，由于使用递归，将会使用隐式栈空间。递归深度可能会达到 n 层。
 
 然后是比较直观的网友题解
-迭代：
+> 迭代：
 ![](file://C:/Users/lab509/Documents/Gridea/post-images/1572145715655.png)
 ```
 ListNode* reverseList(ListNode* head) {
