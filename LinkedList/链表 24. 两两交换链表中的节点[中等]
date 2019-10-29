@@ -1,0 +1,110 @@
+> 给定一个链表，两两交换其中相邻的节点，并返回交换后的链表。
+> 你不能只是单纯的改变节点内部的值，而是需要实际的进行节点交换。
+> 
+> 示例:
+> 给定 1->2->3->4, 你应该返回 2->1->4->3.
+> 
+> 来源：力扣（LeetCode）
+> 链接：https://leetcode-cn.com/problems/swap-nodes-in-pairs
+> 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。 
+
+难点：如何保证指针在交换时保证正确。
+我的思路：
+1->2->3->4->5，示例交换3和4
+将2作为previous，将3作为target
+所以有
+```
+pre->next=tar->next; //2指向4
+tar->next=tar->next->next;//3指向5
+pre->next->next=tar;//4指向3，此时就有2-4-3-5
+pre=tar;//将3作为pre
+tar=pre->next;//将5作为tar
+```
+但是1和2交换时没有pre，所以需要加上一个空表头
+最终代码如下
+```
+class Solution {
+public:
+    ListNode* swapPairs(ListNode* head) {
+        if(head==NULL)
+            return head;
+        ListNode* flag = new ListNode(0); //新建一个结点，value为0
+        flag->next = head; //让它next指针指向头结点
+        ListNode *pre=flag,*tar=head;
+        while(tar!=NULL&&tar->next!=NULL){
+            pre->next=tar->next;
+            tar->next=tar->next->next;
+            pre->next->next=tar;
+            pre=tar;
+            tar=pre->next;
+        }
+        return flag->next;
+    }
+};
+```
+需要注意的点就是加上空表头的代码
+一开始我是直接 `ListNode* flag = head`结果翻车了，因为这样子是等于和head共享一个地址，正确的应该是new出一个结点，再使用new出来的结点的地址
+```
+ListNode* flag = new ListNode(0); //新建一个结点，value为0
+flag->next = head; //让它next指针指向头结点
+```
+
+然后来看一下网友题解：
+首先是和我思路一致的
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1572313056432.jpg)
+```
+class Solution:
+    def swapPairs(self, head: ListNode) -> ListNode:
+        thead = ListNode(-1)
+        thead.next = head
+        c = thead
+        while c.next and c.next.next:
+            a, b=c.next, c.next.next
+            c.next, a.next = b, b.next
+            b.next = a
+            c = c.next.next
+        return thead.next
+```
+
+然后是递归做法
+> 解题方案
+思路
+标签：链表
+本题的递归和非递归解法其实原理类似，都是更新每两个点的链表形态完成整个链表的调整
+其中递归解法可以作为典型的递归解决思路进行讲解
+递归写法要观察本级递归的解决过程，形成抽象模型，因为递归本质就是不断重复相同的事情。而不是去思考完整的调用栈，一级又一级，无从下手。如图所示，我们应该关注一级调用小单元的情况，也就是单个f(x)。
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1572313291404.png)
+其中我们应该关心的主要有三点：
+> 返回值
+> 调用单元做了什么
+> 终止条件
+> 
+> 在本题中：
+> 返回值：交换完成的子链表
+> 调用单元：设需要交换的两个点为 head 和 next，head 连接后面交换完成的子链表，next 连接 head，完成交换
+> 终止条件：head 为空指针或者 next 为空指针，也就是当前无节点或者只有一个节点，无法进行交换
+代码
+递归解法
+```
+class Solution {
+    public ListNode swapPairs(ListNode head) {
+        if(head == null || head.next == null){
+            return head;
+        }
+        ListNode next = head.next;
+        head.next = swapPairs(next.next);
+        next.next = head;
+        return next;
+    }
+}
+```
+
+
+
+
+
+
+
+
+
+
