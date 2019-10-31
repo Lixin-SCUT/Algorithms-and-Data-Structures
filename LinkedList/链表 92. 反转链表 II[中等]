@@ -1,0 +1,145 @@
+> 反转从位置 m 到 n 的链表。请使用一趟扫描完成反转。
+> 
+> 说明:
+> 1 ≤ m ≤ n ≤ 链表长度。
+> 示例:
+> 输入: 1->2->3->4->5->NULL, m = 2, n = 4
+> 输出: 1->4->3->2->5->NULL
+> 
+> 来源：力扣（LeetCode）
+> 链接：https://leetcode-cn.com/problems/reverse-linked-list-ii
+> 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+思路：
+使用三个ListNode指针变量 first 和pre、cur，first一直指向m的前一位，比如例子中的1，然后pre和cur配合将cur移动到first的位置，比如例子中迭代地把3和4 放到1后面的位置
+注意一定要加上一个虚链表头，防止m=1的情况
+最终代码
+```
+class Solution {
+public:
+    ListNode* reverseBetween(ListNode* head, int m, int n) {
+        while(head==NULL&&head->next==NULL)
+            return head;
+        int count=0;
+        ListNode* first;
+        ListNode* cur;
+        ListNode* pre;
+        ListNode* ehead=new ListNode(0);
+        ehead->next=head;
+        cur=ehead;
+        while(count<=n){
+            if(count<m-1){
+                ++count;
+                cur=cur->next;
+                continue;
+            }
+            if(count==m-1){
+                first=cur;
+                pre=first->next;
+                cur=pre->next;
+                count+=2;
+                continue;
+            }
+            pre->next=cur->next;
+            cur->next=first->next;
+            first->next=cur;
+            cur=pre->next;
+            ++count;
+        }
+        return ehead->next;
+    }
+};
+```
+
+最高赞题解和我的一样，然后来看一下官方题解如何
+方法一: 递归
+直觉
+使用递归反转链表的思路来源于反转字符串时使用的类似方法。反转字符串的一个巨大优势是可以使用下标信息。我们可以创建两个指针，一个开头，一个结尾。不断地交换这两个指针指向的元素，并将两个指针向中间移动。在分析链表的情况前，先让我们看看字符串上的示例。
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1572485555891.png)
+反转给定链表的一部分的思路基于上述方法。我们需要两个不同指针，一个指向第 mm 个结点，另一个指向第 nn 个结点。一旦有了这两个指针，我们就可以不断地交换这两个指针指向结点的数据，并将两个指针相向移动，就像字符串的情况那样。
+
+然而，链表中没有向后指针，也没有下标。因此，我们需要使用递归来 模拟 向后指针。递归中的回溯可以帮助我们模拟一个指针从第nn个结点向中心移动的移动过程。
+
+算法
+
+我们定义一个递归函数用于反转给定链表的一部分。
+将函数记为 recurse。该函数使用三个参数: m 为反转的起点, n 为反转的终点, 以及从第 nn 个结点开始，随着递归回溯过程向后移动的指针 right。不清楚的话，可以参考后文的示意图。
+此外，我们还有一个指针 left，它从第 m 个结点开始向前移动。在 `P
+thon中, 我们需要一个全局变量，值随着递归的进行而改变。在其他函数调用造成的变化可以持续的编程语言中，可以考虑将该指针加为函数recurse` 的一个变量。
+在
+递归调用中，给定 m，n，和 right, 首先判断 n = 1。 若判断为真, 则结束。
+于是，当 n 的值达到 1 时，我们便回溯。这时，right 指针在我们要反转的子链表结尾，left 到达了字列表的开头。于是，我们置换数据，并将 left 指针前移：left = left.next。我们需要此变化在回溯过程中保持。
+自此，每当我们回溯时，right 指针向后移一位。这就是前文所说的模拟。通过回溯模拟向后移动。
+当 right == left 或者 right.next == left 时停止交换。当子链表的长度为奇数时，情况为前者；当子链表长度为偶数时为后者。我们使用一个全局 boolean 变量 flag 来停止交换。
+下面是一系列整个算法的示意图，希望能够帮助你理解清楚。
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1572485670158.png)
+这是递归过程的第一步。给定所用链表，left 和 right 指针从链表的 head 开始。第一步是以更新过的 m 和 n 进行递归调用，换而言之，它们的值各自减 1。此外，left 和 right 指针向前移动一位。
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1572485684271.png)
+接下来的两步展示了 left 和 right 指针在链表中的移动。注意到在第二步之后，left 指针抵达了目标位置。因此，后续不再移动。从现在起，只有 right 指针继续移动，直到抵达结点 6。
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1572485695408.png)
+如你所见，在第五步之后，两个指针均抵达了目标位置，可以开始进行回溯。我们不再继续递归。回溯过程中的操作是交换 left 和 right 结点的数据。
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1572485708891.png)
+如你所见，在第三步（回溯）之后，right 指针 穿过了 left 指针，此时已经完成了要求部分链表的反转。结果是 [7 → 9 → 8 → 1 → 10 → 2 → 6]。 于是不再进行数据交换，在代码中，我们使用全局 boolean 变量 flag 来停止数据交换。不能直接跳出递归。
+```
+class Solution {
+
+    // Object level variables since we need the changes
+    // to persist across recursive calls and Java is pass by value.
+    private boolean stop;
+    private ListNode left;
+
+    public void recurseAndReverse(ListNode right, int m, int n) {
+
+        // base case. Don't proceed any further
+        if (n == 1) {
+            return;
+        }
+
+        // Keep moving the right pointer one step forward until (n == 1)
+        right = right.next;
+
+        // Keep moving left pointer to the right until we reach the proper node
+        // from where the reversal is to start.
+        if (m > 1) {
+            this.left = this.left.next;
+        }
+
+        // Recurse with m and n reduced.
+        this.recurseAndReverse(right, m - 1, n - 1);
+
+        // In case both the pointers cross each other or become equal, we
+        // stop i.e. don't swap data any further. We are done reversing at this
+        // point.
+        if (this.left == right || right.next == this.left) {
+            this.stop = true;            
+        }
+
+        // Until the boolean stop is false, swap data between the two pointers
+        if (!this.stop) {
+            int t = this.left.val;
+            this.left.val = right.val;
+            right.val = t;
+
+            // Move left one step to the right.
+            // The right pointer moves one step back via backtracking.
+            this.left = this.left.next;
+        }
+    }
+
+    public ListNode reverseBetween(ListNode head, int m, int n) {
+        this.left = head;
+        this.stop = false;
+        this.recurseAndReverse(head, m, n);
+        return head;
+    }
+}
+```
+复杂度分析
+时间复杂度:O(N)。对每个结点最多处理两次。递归过程
+，回溯
+。在回溯过程中，我们只交换了一半的结点，但总复杂度是 O(N)。
+空间复杂度: 最坏情况下为 O(N)。在最坏的情况下，我们需要反转整个链表。这是此时递归栈的大小。
+
+剩下的迭代法可以直接查看[官方题解](https://leetcode-cn.com/problems/reverse-linked-list-ii/solution/fan-zhuan-lian-biao-ii-by-leetcode/)
+
+
