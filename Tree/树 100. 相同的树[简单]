@@ -1,0 +1,122 @@
+> 给定两个二叉树，编写一个函数来检验它们是否相同。
+> 如果两个树在结构上相同，并且节点具有相同的值，则认为它们是相同的。
+> 示例 1:
+> 输入:   1         1
+>           / \       / \
+>          2   3     2   3
+>        [1,2,3],   [1,2,3]
+> 输出: true
+> 示例 2:
+> 输入:   1          1
+>           /           \
+>          2             2
+>         [1,2],     [1,null,2]
+> 输出: false
+> 示例 3:
+> 输入:    1         1
+>           / \       / \
+>          2   1     1   2
+>         [1,2,1],   [1,1,2]
+> 输出: false
+> 来源：力扣（LeetCode）
+> 链接：https://leetcode-cn.com/problems/same-tree
+> 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+这道题的难点在于如果单纯地分开判断前中后序的遍历顺序的话是无法得到结果的，只有
+1、同时遍历前序
+2、利用前序+中序或者中序+后序可以唯一确定一棵二叉树（注意，前序+后序无法唯一确定一棵二叉树）
+
+我还是使用了第一种方法，并且使用递归，会方便很多，主要的难点就在于应付三种情况
+1.两者同时为NULL
+2.两者其一为NULL
+同时因为使用迭代法，所以需要使用一个函数外的bool变量作为返回值
+
+最后代码为：
+```
+class Solution {
+bool res=true;
+public:
+    bool isSameTree(TreeNode* p, TreeNode* q) {
+        if(p==NULL&&q==NULL)
+            return res;
+        if(p==NULL||q==NULL&&!(p==NULL&&q==NULL)){
+            res=false;
+            return res;
+        }
+        if(p->val!=q->val){
+            res=false;
+            return res;
+        } 
+        isSameTree(p->left, q->left);
+        isSameTree(p->right, q->right);
+        return res;
+    }
+};
+```
+
+然后来看一下官方题解
+> 方法一：递归
+> 直觉
+> 最简单的策略是使用递归。首先判断 p 和 q 是不是 None，然后判断它们的值是否相等。
+> 若以上判断通过，则递归对子结点做同样操作。
+```
+class Solution {
+  public boolean isSameTree(TreeNode p, TreeNode q) {
+    // p and q are both null
+    if (p == null && q == null) return true;
+    // one of p and q is null
+    if (q == null || p == null) return false;
+    if (p.val != q.val) return false;
+    return isSameTree(p.right, q.right) &&
+            isSameTree(p.left, q.left);
+  }
+}
+```
+
+官网题解这里比我好很多，特别是返回值的处理，我用了一个全局变量，但是官方题解直接返回
+
+> 方法二：迭代
+> 直觉
+> 从根开始，每次迭代将当前结点从双向队列中弹出。然后，进行方法一中的判断：
+> p 和 q 不是 None,
+> p.val 等于 q.val,
+> 若以上均满足，则压入子结点。
+ ```
+class Solution {
+  public boolean check(TreeNode p, TreeNode q) {
+    // p and q are null
+    if (p == null && q == null) return true;
+    // one of p and q is null
+    if (q == null || p == null) return false;
+    if (p.val != q.val) return false;
+    return true;
+  }
+
+  public boolean isSameTree(TreeNode p, TreeNode q) {
+    if (p == null && q == null) return true;
+    if (!check(p, q)) return false;
+
+    // init deques
+    ArrayDeque<TreeNode> deqP = new ArrayDeque<TreeNode>();
+    ArrayDeque<TreeNode> deqQ = new ArrayDeque<TreeNode>();
+    deqP.addLast(p);
+    deqQ.addLast(q);
+
+    while (!deqP.isEmpty()) {
+      p = deqP.removeFirst();
+      q = deqQ.removeFirst();
+
+      if (!check(p, q)) return false;
+      if (p != null) {
+        // in Java nulls are not allowed in Deque
+        if (!check(p.left, q.left)) return false;
+        if (p.left != null) {
+          deqP.addLast(p.left);
+          deqQ.addLast(q.left);
+```
+> 复杂度分析
+> 时间复杂度 : O(N)，其中 N 是树的结点数，因为每个结点都访问一次。
+> 空间复杂度 : 最优情况（完全平衡二叉树）时为 O(log(N))，最坏情况下（完全不平衡二叉树）时为 O(N)，用于维护双向队列。
+
+网友解析：第二种方法是层次遍历的非递归算法
+
