@@ -1,0 +1,138 @@
+> 在上次打劫完一条街道之后和一圈房屋后，小偷又发现了一个新的可行窃的地区。这个地区只有一个入口，我们称之为“根”。 除了“根”之外，每栋房子有且只有一个“父“房子与之相连。一番侦察之后，聪明的小偷意识到“这个地方的所有房屋的排列类似于一棵二叉树”。 如果两个直接相连的房子在同一天晚上被打劫，房屋将自动报警。
+计算在不触动警报的情况下，小偷一晚能够盗取的最高金额。
+示例 1:
+输入: [3,2,3,null,3,null,1]
+     3
+    / \
+   2   3
+     \   \ 
+     3   1
+输出: 7 
+解释: 小偷一晚能够盗取的最高金额 = 3 + 3 + 1 = 7.
+示例 2:
+输入: [3,4,5,1,3,null,1]
+     3
+    / \
+   4   5
+  / \   \ 
+ 1   3   1
+输出: 9
+解释: 小偷一晚能够盗取的最高金额 = 4 + 5 = 9.
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/house-robber-iii
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+最终代码：
+```
+class Solution {
+public:
+    int rob(TreeNode* root) {
+        auto res=preorder(root);
+        return max(res[0],res[1]);
+    }
+    
+    vector<int> preorder(TreeNode* cur){
+        vector<int> vi;
+        if(cur==NULL){
+            vi.push_back(0);
+            vi.push_back(0);
+            return vi;}
+        auto vl=preorder(cur->left);
+        auto vr=preorder(cur->right);
+        vi.push_back(max(vl[0]+vr[0],max(vl[1]+vr[1],max(vl[1]+vr[0],vl[0]+vr[1]))));
+        vi.push_back(cur->val+vl[0]+vr[0]);
+        return vi;     
+    } 
+};
+```
+
+这道题还是蛮波折的，一开始我希望用普通的方法解决，比如说层次遍历后只取间隔层的所有节点的和，但是后来想想是不行的
+比如`[[1],[10,1],[1,1,1,10]] `这种情况，很明显应该牺牲头节点各取第二层和第三层的10
+所以动态规划在所难免了，这道题似乎和之前的股票问题比较像，0代表不偷，1 代表偷，但是只有冻结期限制而没有买入卖出等
+一开始想着从根节点出发，但是发现问题是同一层里值无法共享，所以必须从叶节点出发
+对于普通的具有两个子节点的节点来说，它取0的情况比较多，主要有`[（左0，右0）（左1，右0）（左0，右1）（左1，右1）]`，而我们只需要取这四者的最大值就好，取1的话就比较简单了，两个子树都不能偷，必须左1右1，然后再加上当前val返回就好
+我在取0的时候一开始不小心忘了左0右0，结果导致测试用例结果只差了1，差点百思不得其解
+然后看了题解后发现取0的情况完全可以简化为`max（（左0，左1），（右0，右1））`
+哈哈哈不过第一次独立做出动态规划题还是非常高兴的啊！（虽然拖了两天hhhh
+
+然后来看一下网友题解（当时非常激动，发现和网友题解思路一致）
+> 用一个int[]分别记录包含根节点和不包含根节点时的最大值
+```
+class Solution {
+    public int rob(TreeNode root) {
+        int[] res = doRob(root);
+        return Math.max(res[0],res[1]);
+    }
+    //res[0]为不包括根节点的最大值，res[1]为包括根节点的最大值
+    private int[] doRob(TreeNode root){
+        int[] res = new int[2];
+        if(root == null)
+            return res;
+        int[] left = doRob(root.left);
+        int[] right = doRob(root.right);
+        //不包含根节点，最大值为两个子树的最大值之和
+        res[0] = Math.max(left[0],left[1])+Math.max(right[0],right[1]);
+        //包含根节点，最大值为两个子树不包含根节点的最大值加上根节点的值
+        res[1] = left[0] + right[0] + root.val;
+        return res;
+    }
+}
+```
+
+另外一个说得比较详细的
+
+> 可以回顾一下初级版的LeetCode198：打家劫舍，这是一道一维dp，状态转移方程也很简单：
+> dp[i] = Math.max(dp[i - 2] + nums[cur], dp[i - 1]);
+> 当前偷窃的最大金额可能有两种来源情况，要么偷了这家，上一家没偷；要么偷了上一家，这家没偷。因此每一个结点的dp值和前两个结点的dp值有关。
+> 这道升级版的树状动态规划问题也可以由一维的dp延伸来，只是情况稍微复杂一些，每一个节点的dp值与三层二叉树的结点dp值相关。对于下图所示的一棵三层满二叉树来说：
+> 
+>       1
+>     /   \
+>    2     3
+>   / \   / \ 
+>  4   5 6   7
+> 在每个结点的金额非负的情况下，且要保证取值结点不相邻，只可能有四种最大的取值方式：
+> 
+> 1. 结点2 + 结点3
+> 2. 结点1 + 结点4 + 结点5 + 结点6 + 结点7
+> 3. 结点2 + 结点6 + 结点7
+> 4. 结点3 + 结点4 + 结点5
+> 那么我们可以自底向上递归进行这个dp运算，令dp[i]代表以i结点为根节点的子树的最大偷窃金额值，计算结束后将dp值直接保存在i结点的val值当中返回。可以推出状态转移方程为：
+> 
+> dp[root] = Max(dp[l]+dp[r], root.val+dp[ll]+dp[lr]+dp[rr]+dp[rl], dp[l]+dp[rl]+dp[rr], dp[r]+dp[lr]+dp[ll]);
+> 分别对应上述四种情况。而观察发现，在dp[l]和dp[r]的计算中实际已经包含了dp[ll]、dp[lr]、dp[rr]、dp[rl]的取舍情况，因此可以简化为前两种情况。状态转移方程简化为：
+> 
+> dp[root] = Max(dp[l]+dp[r], root.val+dp[ll]+dp[lr]+dp[rr]+dp[rl]);
+> 为了方便运算，我们一般会为dp数组赋予初值。在树状dp中同样，我们需要将每一个非叶结点作为根节点的子树构造成一棵三层满二叉树方便运算。
+> 
+> 对于叶子结点，我们给其添加值为0的左右子结点。
+> 
+> 对于左/右子树为空的非叶节点，我们在其左/右添加一棵两层值为0的满二叉树。
+
+```
+class Solution {
+    public int rob(TreeNode root) {
+        return Solution(root).val;
+    }
+
+    public TreeNode Solution(TreeNode root){
+        if(root == null){
+            TreeNode newNode = new TreeNode(0);
+            return Solution(newNode);
+        }
+        if(root.left == null && root.right == null){
+            root.left = new TreeNode(0);
+            root.right = new TreeNode(0);
+            return root;
+        }
+
+        root.left = Solution(root.left);
+        root.right = Solution(root.right);
+        root.val = Math.max(root.left.val + root.right.val, root.val + root.left.left.val + root.left.right.val + root.right.left.val + root.right.right.val);
+
+        return root;
+    }
+}
+```
+
+hhh第一次自己完成动态规划问题还是挺激动的
