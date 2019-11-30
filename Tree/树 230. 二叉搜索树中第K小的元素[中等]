@@ -1,0 +1,135 @@
+> 给定一个二叉搜索树，编写一个函数 kthSmallest 来查找其中第 k 个最小的元素。
+说明：
+你可以假设 k 总是有效的，1 ≤ k ≤ 二叉搜索树元素个数。
+示例 1:
+输入: root = [3,1,4,null,2], k = 1
+   3
+  / \
+ 1   4
+  \
+   2
+输出: 1
+示例 2:
+输入: root = [5,3,6,2,4,null,null,1], k = 3
+       5
+      / \
+     3   6
+    / \
+   2   4
+  /
+ 1
+输出: 3
+进阶：
+如果二叉搜索树经常被修改（插入/删除操作）并且你需要频繁地查找第 k 小的值，你将如何优化 kthSmallest 函数？
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/kth-smallest-element-in-a-bst
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+这道题看起来很简单，只需要按遍历的顺序找到那个val然后提前终止返回就好，但是实现起来遇到了不少坑，
+1.一开始想着说直接递减k，但是发现这个方法因为是中序遍历，必须将k传引用，否则值传递的递归中的递减是无效的，比如从根开始每一个左子树递减一次，但是递归回到根时却又回到了原值（然而传引用居然时间比利用一个全局值递减还慢） 2.然后发现如果想提前终止，必须每次调用inorder之前都检测一遍，或者说利用一个全局bool flag值 
+3.暂时没有发现比较好的返回值方法，不然我想可以实现原函数递归 
+4.还没看题解，但是发现都差不多吧，最好找找在频繁增删下还能优化得比较好的题解
+```
+class Solution {
+public:
+    int res;
+    int num=0;
+    bool get=false;
+    int kthSmallest(TreeNode* root, int k) {
+        inorder(root,k);
+        return res;
+    }
+
+    void inorder(TreeNode *cur,int k){
+        if(cur==NULL)
+          return;
+        if(get)
+          return;
+        inorder(cur->left,k);
+        if(k==(++num)&&!get){
+         res=cur->val;
+         get=true;
+         return;
+        }
+        inorder(cur->right,k);
+        return;
+    }
+};
+```
+
+然后来看网友题解：
+> 时间复杂度：依次遍历前 k 个节点，因此时间复杂度为 O(k)
+空间复杂度：生成器只需要 O(1) 的空间，如果不考虑递归栈所占用的空间，那么复杂度为 O(1)
+```
+class Solution:
+    def mid_order(self, root):
+        if not root: return
+        yield from self.mid_order(root.left)
+        yield root.val
+        yield from self.mid_order(root.right)
+        
+    def kthSmallest(self, root: TreeNode, k: int) -> int:
+        gen = self.mid_order(root)
+        for _ in range(k - 1):
+            next(gen)
+        return next(gen)
+```
+这个题解用的是python3的生成器
+来看看其他的
+> 由于二叉搜索树对应就是一个排序的数组，即将二叉搜索树的节点值映射到一条直线上，可以得到一个排序数组，根节点为排序数组中点。
+所以我们利用二叉树的中序遍历将其转换为数组，直接返回数组中的第k个元素即可。
+```
+class Solution {
+public:
+    int kthSmallest(TreeNode* root, int k) {
+        vector<int> record;
+        stack<TreeNode*> s;
+        while(!s.empty()||root!=nullptr)
+        {
+           if(root!=nullptr)//进栈顺序为根左...根左，出栈顺序为左根...左根
+            {
+                s.push(root);
+                root=root->left;
+            }
+            else//直至上一结点的左结点为nullptr时，将上一结点的val打印，并添加其右子树
+            {
+                TreeNode* top=s.top();s.pop();
+                record.push_back(top->val);
+                root=top->right;
+            }
+        }
+        return record[k-1];
+    }
+};
+```
+> 感谢评论下方@dutwxh-BbcW5RxS2n给出的优化意见，现补充优化后的代码：
+可以不pushback，设置一个flag初始为0，每次需要pushback的时候++，一旦到K直接返回
+```
+class Solution {
+public:
+    int kthSmallest(TreeNode* root, int k) {
+        stack<TreeNode*> s;
+        int count=0;
+        while(!s.empty()||root!=nullptr)
+        {
+           if(root!=nullptr)//进栈顺序为根左...根左，出栈顺序为左根...左根
+            {
+                s.push(root);
+                root=root->left;
+            }
+            else//root的左子节点为空，将这个节点打印并出栈，添加该节点的右子树即可
+            {
+                TreeNode* top=s.top();s.pop();
+                count++;
+                if(count==k)return top->val;
+                root=top->right;
+            }
+        }
+        return -1;
+    }
+};
+```
+
+最后发现还是没有比较特别的
+
+
