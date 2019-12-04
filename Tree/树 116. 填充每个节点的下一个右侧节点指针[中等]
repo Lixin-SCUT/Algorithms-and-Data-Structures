@@ -1,0 +1,95 @@
+> 给定一个完美二叉树，其所有叶子节点都在同一层，每个父节点都有两个子节点。二叉树定义如下：
+struct Node {
+  int val;
+  Node *left;
+  Node *right;
+  Node *next;
+}
+填充它的每个 next 指针，让这个指针指向其下一个右侧节点。如果找不到下一个右侧节点，则将 next 指针设置为 NULL。
+初始状态下，所有 next 指针都被设置为 NULL。
+示例：
+
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1575424563194.png)
+> 输入：{"$id":"1","left":{"$id":"2","left":{"$id":"3","left":null,"next":null,"right":null,"val":4},"next":null,"right":{"$id":"4","left":null,"next":null,"right":null,"val":5},"val":2},"next":null,"right":{"$id":"5","left":{"$id":"6","left":null,"next":null,"right":null,"val":6},"next":null,"right":{"$id":"7","left":null,"next":null,"right":null,"val":7},"val":3},"val":1}
+输出：{"$id":"1","left":{"$id":"2","left":{"$id":"3","left":null,"next":{"$id":"4","left":null,"next":{"$id":"5","left":null,"next":{"$id":"6","left":null,"next":null,"right":null,"val":7},"right":null,"val":6},"right":null,"val":5},"right":null,"val":4},"next":{"$id":"7","left":{"$ref":"5"},"next":null,"right":{"$ref":"6"},"val":3},"right":{"$ref":"4"},"val":2},"next":null,"right":{"$ref":"7"},"val":1}
+解释：给定二叉树如图 A 所示，你的函数应该填充它的每个 next 指针，以指向其下一个右侧节点，如图 B 所示。 
+提示：
+你只能使用常量级额外空间。
+使用递归解题也符合要求，本题中递归程序占用的栈空间不算做额外的空间复杂度。
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/populating-next-right-pointers-in-each-node
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+```
+class Solution {
+public:
+    vector<Node*> vn;
+    Node* connect(Node* root) {
+        preorder(root,0);
+        return root;
+    }
+    
+    void preorder(Node *cur,int i){
+        if(cur==NULL)
+            return;
+        if(vn.size()==i)
+            vn.push_back(cur);
+        else{
+            vn[i]->next=cur;
+            vn[i]=cur;
+        }
+        preorder(cur->left,i+1);
+        preorder(cur->right,i+1);
+        return;
+    }
+};
+```
+我一开始只想到了层次遍历，参考层次遍历，利用先序遍历和vector的话可以按照从左到右的顺序来保存层次遍历的结果，由于我们只需要和前一个节点链接，所以这一次只需要一层vector<Node*>就好
+然后重点主要是push_back的判断和每个节点和前一个节点链接并更新vector
+唯一的缺点就是我这个vector不是常量空间
+看了题解，非常优雅啊！直接处理子树的链接和相邻子树的链接，值得学习
+
+看看网友题解
+```
+    Node* connect(Node* root) {
+        if (!root) return root;
+        Node * left = root->left;
+        Node * right = root->right;
+        while(left) {
+            left->next = right;
+            left = left->right;
+            right = right->left;
+        }
+        connect(root->left);
+        connect(root->right);
+        return root;
+    }
+```
+主要就是把完美二叉树劈成两半，先处理大的两半二叉树中间的左右连接，然后递归处理小的连接
+
+非递归方法
+```
+Node* connect(Node* root) {
+    if (root == nullptr)return nullptr;
+	if (root->left == nullptr) return root; 
+    else 
+    {
+        root->left->next = root->right;
+    }
+	Node* cur = root->left->left;
+	Node* pre = root->left;
+	while (cur!=nullptr)
+	{
+		while (pre!=nullptr)
+		{
+			pre->left->next = pre->right;
+			if (pre->next != nullptr)pre->right->next = pre->next->left;
+			else pre->right->next = nullptr;
+			pre = pre->next;
+		}
+		pre = cur;
+		cur = cur->left;
+	}
+	return root;
+    }
+```
