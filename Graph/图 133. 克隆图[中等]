@@ -1,0 +1,113 @@
+> 给定无向连通图中一个节点的引用，返回该图的深拷贝（克隆）。图中的每个节点都包含它的值 val（Int） 和其邻居的列表（list[Node]）。
+示例：
+
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1575679961753.png)
+> 输入：
+{"$id":"1","neighbors":[{"$id":"2","neighbors":[{"$ref":"1"},{"$id":"3","neighbors":[{"$ref":"2"},{"$id":"4","neighbors":[{"$ref":"3"},{"$ref":"1"}],"val":4}],"val":3}],"val":2},{"$ref":"4"}],"val":1}
+解释：
+节点 1 的值是 1，它有两个邻居：节点 2 和 4 。
+节点 2 的值是 2，它有两个邻居：节点 1 和 3 。
+节点 3 的值是 3，它有两个邻居：节点 2 和 4 。
+节点 4 的值是 4，它有两个邻居：节点 1 和 3 。
+提示：
+节点数介于 1 到 100 之间。
+无向图是一个简单图，这意味着图中没有重复的边，也没有自环。
+由于图是无向的，如果节点 p 是节点 q 的邻居，那么节点 q 也必须是节点 p 的邻居。
+必须将给定节点的拷贝作为对克隆图的引用返回。
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/clone-graph
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+//一开始就感觉这个其实是一个遍历题，主要是保证每个节点仅被遍历一次否则会new出重复的节点，看了大话数据结构的源代码后，发现缺少一个记录已访问节点的结构，就使用map代替了
+//map就保存一对结点，一个旧结点对应一个新节点
+//然后主要流程就是构造新节点-利用map判断是否已存在-存在则连接-不存在则递归调用
+//最后空间复杂度爆炸，但是时间复杂度还可以
+//时间复杂度O(n^2) 假设每个点都相连，则需要两层n循环
+
+```
+/*
+// Definition for a Node.
+class Node {
+public:
+    int val;
+    vector<Node*> neighbors;
+
+    Node() {}
+
+    Node(int _val, vector<Node*> _neighbors) {
+        val = _val;
+        neighbors = _neighbors;
+    }
+};
+*/
+class Solution {
+public:
+    map<Node*,Node*> mnn;
+    Node* cloneGraph(Node* node) {
+        Node *cur=new Node(node->val,vector<Node*>());
+        mnn.insert({node,cur});
+        for(auto i:node->neighbors){
+            if(mnn.count(i))
+                cur->neighbors.push_back(mnn[i]);
+            else{       
+               auto next=cloneGraph(i); 
+                cur->neighbors.push_back(next);
+            }
+        }
+        return cur;
+    }
+};
+```
+
+然后来看看网友题解：
+> 解题思路:
+这道题就是遍历整个图，所以遍历时候要记录已经访问点，我们用一个字典记录。
+所以，遍历方法就有两种。
+思路一:DFS (深度遍历)
+思路二:BFS (广度遍历)
+大家重点掌握，后面图遍历都和这个有关系！
+代码:
+思路一:
+```
+Java
+class Solution {
+    public Node cloneGraph(Node node) {
+        Map<Node, Node> lookup = new HashMap<>();
+        return dfs(node, lookup);
+    }
+
+    private Node dfs(Node node, Map<Node,Node> lookup) {
+        if (node == null) return null;
+        if (lookup.containsKey(node)) return lookup.get(node);
+        Node clone = new Node(node.val, new ArrayList<>());
+        lookup.put(node, clone);
+        for (Node n : node.neighbors)clone.neighbors.add(dfs(n,lookup));
+        return clone;
+    }
+}
+```
+> 思路二:
+```
+Java
+class Solution {
+    public Node cloneGraph(Node node) {
+        if (node == null) return null;
+        Map<Node, Node> lookup = new HashMap<>();
+        Node clone = new Node(node.val, new ArrayList<>());
+        lookup.put(node, clone);
+        Deque<Node> queue = new LinkedList<>();
+        queue.offer(node);
+        while (!queue.isEmpty()) {
+            Node tmp = queue.poll();
+            for (Node n : tmp.neighbors) {
+                if (!lookup.containsKey(n)) {
+                    lookup.put(n, new Node(n.val, new ArrayList<>()));
+                    queue.offer(n);
+                }
+                lookup.get(tmp).neighbors.add(lookup.get(n));
+            }
+        }
+        return clone;
+    }
+}
+```
