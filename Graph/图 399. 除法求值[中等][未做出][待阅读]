@@ -1,0 +1,281 @@
+> 给出方程式 A / B = k, 其中 A 和 B 均为代表字符串的变量， k 是一个浮点型数字。根据已知方程式求解问题，并返回计算结果。如果结果不存在，则返回 -1.0。
+示例 :
+给定 a / b = 2.0, b / c = 3.0
+问题: a / c = ?, b / a = ?, a / e = ?, a / a = ?, x / x = ? 
+返回 [6.0, 0.5, -1.0, 1.0, -1.0 ]
+输入为: vector<pair<string, string>> equations, vector< double>& values,vector<pair<string, string>> queries(方程式，方程式结果，问题方程式)， 其中 equations.size() == values.size()，即方程式的长度与方程式结果长度相等（程式与结果一一对应），并且结果值均为正数。以上为方程式的描述。 返回vector< double>类型。
+基于上述例子，输入如下：
+equations(方程式) = [ ["a", "b"], ["b", "c"] ],
+values(方程式结果) = [2.0, 3.0],
+queries(问题方程式) = [ ["a", "c"], ["b", "a"], ["a", "e"], ["a", "a"], ["x", "x"] ]. 
+输入总是有效的。你可以假设除法运算中不会出现除数为0的情况，且不存在任何矛盾的结果。
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/evaluate-division
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+//在310用floyd翻车了就回来这边用了
+//本题目可以视为 建立图-搜索两点之间的最短路径 的问题
+//在大话数据结构的两种方法里面，最适合这道题的无疑是floyd
+//另一种算法：迪杰斯特拉（Dijkstra)算法：按路径长度递增的次序产生最短路径的算法，基于已经求出的最短路径的基础上一步步求出它们之间顶点的最短路径，适用于某个源点到其余各顶点的最 短路径问题
+//floyd就等于动态规划，一共有三层规划 k代表中转顶点的下标 v是起始顶点 w代表结束顶点，等于对于每两个点之间都以某个点来做中转，然后只取最短点（其实就是（Dijkstra)算法的循环版）
+//对于本题目来说，需要注意的点有：1.需要用map建立string和int下标的映射
+//2.对对称点使用倒数来初始化
+//3.循环计算时的判断式`if(graph[v][w]==-1.0&&graph[v][k]!=-1.0&&graph[k][w]!=-1.0)`
+//4.最后利用map进行判断节点是否存在` if(trans.count(queries[i][0])&&trans.count(queries[i][1]))`
+
+```
+class Solution {
+public:
+    vector<double> calcEquation(vector<vector<string>>& equations, vector<double>& values, vector<vector<string>>& queries) {
+        map<string,int> trans;
+        int n=0;
+        for(int i=0;i<equations.size();++i){
+            if(!trans.count(equations[i][0]))
+               trans.insert({equations[i][0],n++});
+             if(!trans.count(equations[i][1]))
+               trans.insert({equations[i][1],n++});
+        }
+        vector<vector<double>> graph(n,vector(n,-1.0));
+        for(int i=0;i<n;++i)
+            graph[i][i]=1.0;
+       for(int i=0;i<equations.size();++i){
+           int row=trans[equations[i][0]];
+           int col=trans[equations[i][1]];
+           graph[row][col]=values[i];
+           graph[col][row]=1/values[i];               
+       } 
+     build(graph);  
+     vector<double> res;
+    for(int i=0;i<queries.size();++i){
+        if(trans.count(queries[i][0])&&trans.count(queries[i][1])){
+            int row=trans[queries[i][0]];
+            int col=trans[queries[i][1]];
+            res.push_back(graph[row][col]);
+        }
+        else
+            res.push_back(-1.0);
+                 }
+                return res;
+    }
+    
+    void build(vector<vector<double>>& graph){       
+        int n=graph.size();
+        for(int k=0;k<n;++k)
+            for(int v=0;v<n;++v)
+                for(int w=0;w<n;++w)
+                    if(graph[v][w]==-1.0&&graph[v][k]!=-1.0&&graph[k][w]!=-1.0)
+                        graph[v][w]=graph[v][k]*graph[k][w],graph[w][v]=1/graph[v][w];
+    }
+};
+```
+
+然后惯例来看一下网友题解，有一位网友总结了三种解法，而且用的是C++，感动
+方法一：Floyd
+```
+struct Value {
+    int status;
+    double val;
+    Value(): status(0), val(0) {}
+    Value(int s, double v) : status(s), val(v) {}
+};
+
+class Solution {
+public:
+    vector<double> calcEquation(vector<vector<string>>& equations, vector<double>& values, vector<vector<string>>& queries) {      
+        unordered_map<string, int> store;
+        int n = 0;
+        for (auto e : equations) {
+            if (store.find(e[0]) == store.end())
+                store[e[0]] = n++;
+            if (store.find(e[1]) == store.end())
+                store[e[1]] = n++;
+        }
+
+        vector<vector<Value>> graph(n, vector<Value>(n, Value()));
+        for (int i = 0; i < equations.size(); ++i) {
+            int ia = store[equations[i][0]];
+            int ib = store[equations[i][1]];
+            graph[ia][ib] = Value(1, values[i]);
+            graph[ib][ia] = Value(1, 1/values[i]);
+        }
+        
+        for (int k = 0; k < n; ++k) {
+            for (int i = 0; i < n; ++i) {
+                for (int j = 0; j < n; ++j) {
+                    if (graph[i][j].status == 0 && graph[i][k].status == 1 && graph[k][j].status == 1) {
+                        graph[i][j] = Value(1, graph[i][k].val * graph[k][j].val);
+                    }
+                }
+            }
+        }
+        
+        vector<double> res;
+        for (auto q : queries) {
+            if (store.find(q[0]) == store.end() || store.find(q[1]) == store.end()) {
+                res.push_back(-1);
+                continue;
+            } 
+            int ia = store[q[0]];
+            int ib = store[q[1]];
+            double r = graph[ia][ib].status == 1 ? graph[ia][ib].val : -1;
+            res. push_back(r);
+        }
+        return res;
+    }
+};
+```
+方法二：dfs 和 bfs
+主要分为两步：
+1.build 构造初始化图
+2.dfs 或者 bfs 进行遍历
+```
+class Solution {
+public:
+    vector<double> calcEquation(vector<vector<string>>& equations, vector<double>& values, vector<vector<string>>& queries) {
+        auto graph = build(equations, values);
+           
+        vector<double> res;  
+        for (auto q : queries) {
+            set<string> visited;
+            bool found = false;
+            //double r = bfs(graph, visited, q[0], q[1], found);
+            double r = dfs(graph, visited, q[0], q[1], found);
+            if (found) {
+                res.push_back(r);
+                graph[q[0]][q[1]] = r;
+                graph[q[1]][q[0]] = 1 / r;
+            } else {
+                res.push_back(-1);
+            }
+        }
+      
+        return res;
+    }
+
+    unordered_map<string, unordered_map<string, double>> build(vector<vector<string>>& equations, vector<double>& values) {
+        unordered_map<string, unordered_map<string, double>> m;
+        for (int i = 0; i < equations.size(); ++i) {
+            vector<string> eqa = equations[i];
+            string a = eqa[0];
+            string b = eqa[1];
+            double v = values[i];
+            if (m.find(a) == m.end()) {
+                m[a] = unordered_map<string, double>{{b, v}};
+            } else {
+                m[a][b] = v;
+            }
+            if (m.find(b) == m.end()) {
+                m[b] = unordered_map<string, double>{{a, 1 /v}};
+            } else {
+                m[b][a] = 1 / v;
+            }
+        }
+        return m;
+    }
+
+    double bfs(unordered_map<string, unordered_map<string, double>>& g, set<string> visited, string begin, string end, bool& found) {
+        if (g.find(begin) == g.end() || g.find(end) == g.end()) {
+            found = false;
+            return -1;
+        }
+        queue<pair<string, double>> q;
+        q.push(make_pair(begin, 1));
+        while (!q.empty()) {
+            auto cur = q.front();
+            q.pop();
+            if (visited.find(cur.first) != visited.end()) {
+                continue;
+            }
+            if (cur.first == end) {
+                found = true;
+                return cur.second;
+            }
+            visited.insert(cur.first);
+            for (auto it : g[cur.first]) {
+                q.push(make_pair(it.first, cur.second * it.second));
+            }
+        }
+        found = false;
+        return -1;
+    }
+  
+    double dfs(unordered_map<string, unordered_map<string, double>>& g, set<string> visited, string begin, string end, bool& found) {
+        if (g.find(begin) == g.end() || g.find(end) == g.end()) {
+            found = false;
+            return -1;
+        }
+        if (visited.find(begin) != visited.end()) {
+            found = false;
+            return -1;
+        }
+        if (g[begin].find(end) != g[begin].end()) {
+            found = true;
+            return g[begin][end];
+        }
+        visited.insert(begin);
+        for (auto it : g[begin]) {
+            double r = dfs(g, visited, it.first, end, found);
+            if (found) {
+                double res = r * it.second;
+                return res;
+            }
+        }
+        visited.erase(begin);
+        found = false;
+        return -1;
+    }
+};
+```
+方法三：并查集
+```
+struct Node {
+    double value;
+    Node* parent;
+    Node() : parent(this) {}
+    Node(double v) : value(v), parent(this) {}
+};
+
+class Solution {
+    unordered_map<string, Node*> m;
+
+    Node* find(Node* n) {
+        if (n->parent != n) {
+            n->parent = find(n->parent);
+        }
+        return n->parent;
+    }
+   
+    void merge(Node* n1, Node* n2, double val) {
+        Node* p1 = find(n1);
+        Node* p2 = find(n2);
+        double ratio = n2->value * val / n1->value;
+        for (auto it : m) {
+            if (find(it.second) == p1) {
+                it.second->value *= ratio;
+            }
+        } 
+        p1->parent = p2;
+    }
+public:
+    vector<double> calcEquation(vector<vector<string>>& equations, vector<double>& values, vector<vector<string>>& queries) {
+        for (int i = 0; i < equations.size(); ++i) {
+            string a = equations[i][0];
+            string b = equations[i][1];
+            if (m.find(a) == m.end()) m[a] = new Node(values[i]);
+            if (m.find(b) == m.end()) m[b] = new Node(1.0);
+            merge(m[a], m[b], values[i]);
+        }
+        vector<double> res;
+        for (auto q : queries) {
+            if (m.find(q[0]) == m.end() || m.find(q[1]) == m.end() || find(m[q[0]]) != find(m[q[1]])) {
+                res.push_back(-1);
+            } else {
+                res.push_back(m[q[0]]->value / m[q[1]]->value);
+            }
+        }
+        return res;
+    }
+};
+```
+
+DFS和BFS 以及并查集值得好好阅读一下。
