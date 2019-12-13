@@ -1,0 +1,99 @@
+> 假设按照升序排序的数组在预先未知的某个点上进行了旋转。
+( 例如，数组 [0,0,1,2,2,5,6] 可能变为 [2,5,6,0,0,1,2] )。
+编写一个函数来判断给定的目标值是否存在于数组中。若存在返回 true，否则返回 false。
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/search-in-rotated-sorted-array-ii
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+示例 1:
+输入: nums = [2,5,6,0,0,1,2], target = 0
+输出: true
+示例 2:
+输入: nums = [2,5,6,0,0,1,2], target = 3
+输出: false
+进阶:
+这是 搜索旋转排序数组 的延伸题目，本题中的 nums  可能包含重复元素。
+这会影响到程序的时间复杂度吗？会有怎样的影响，为什么？
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/search-in-rotated-sorted-array-ii
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+//本来想着说将33题的代码稍微改一下就上马，结果8太行，比如这种例子[1,3,1,1,1]里面找3这种例子
+//本来想着说优先判断if(nums[mid]==nums[first]&&nums[mid]==nums[last])这个来处理特殊情况，但是始终没法处理[1,3,1,1,1]和[1,1,1,3,1]这两种相互矛盾的情况啊
+//扛不住了看了一下题解，没果然没那么简单啊，高赞回答还是用++first,--last;逐步解决的，但是时间复杂度只击败了30.63%，莫非有更好的解法？
+
+```
+class Solution {
+public:
+    int search(vector<int>& nums, int target) {
+        if(nums.empty()) return 0;
+        int first=0,last=nums.size()-1,mid;
+        while(first<last){
+            mid=first+(last-first)/2;
+            if(nums[mid]==nums[first]&&nums[mid]==nums[last]) ++first,--last;
+            else if(nums[mid]<nums[first]^target<=nums[mid]^target>=nums[first])
+                first=mid+1;
+            else
+                last=mid;
+        }
+        if(nums[first]==target)
+            return 1;
+        return 0;
+    }
+};
+```
+
+来看一下网友题解：
+> 解题思路：
+本题是需要使用二分查找，怎么分是关键，举个例子：
+第一类
+10111 和 11101 这种。此种情况下 nums[start] == nums[mid]，分不清到底是前面有序还是后面有序，此时 start++ 即可。相当于去掉一个重复的干扰项。
+第二类
+2 3 4 5 6 7 1 这种，也就是 nums[start] < nums[mid]。此例子中就是 2 < 5；
+这种情况下，前半部分有序。因此如果 nums[start] <=target<nums[mid]，则在前半部分找，否则去后半部分找。
+第三类
+6 7 1 2 3 4 5 这种，也就是 nums[start] > nums[mid]。此例子中就是 6 > 2；
+这种情况下，后半部分有序。因此如果 nums[mid] <target<=nums[end]。则在后半部分找，否则去前半部分找。
+```
+public boolean search(int[] nums, int target) {
+        if (nums == null || nums.length == 0) {
+            return false;
+        }
+        int start = 0;
+        int end = nums.length - 1;
+        int mid;
+        while (start <= end) {
+            mid = start + (end - start) / 2;
+            if (nums[mid] == target) {
+                return true;
+            }
+            if (nums[start] == nums[mid]) {
+                start++;
+                continue;
+            }
+            //前半部分有序
+            if (nums[start] < nums[mid]) {
+                //target在前半部分
+                if (nums[mid] > target && nums[start] <= target) {
+                    end = mid - 1;
+                } else {  //否则，去后半部分找
+                    start = mid + 1;
+                }
+            } else {
+                //后半部分有序
+                //target在后半部分
+                if (nums[mid] < target && nums[end] >= target) {
+                    start = mid + 1;
+                } else {  //否则，去后半部分找
+                    end = mid - 1;
+
+                }
+            }
+        }
+        //一直没找到，返回false
+        return false;
+
+    }
+```
+
+最后还是发现无法优雅地处理重复元素的情况，只能一点一点夹逼，在最坏的情况下 比如111...1112111...111的情况下直接退化成时间复杂度为O（n）的顺序查找
+然后评论里顺序查找直接击败了100%hhh
