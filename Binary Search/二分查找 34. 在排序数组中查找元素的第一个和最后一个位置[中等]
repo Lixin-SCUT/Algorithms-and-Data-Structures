@@ -1,0 +1,87 @@
+> 给定一个按照升序排列的整数数组 nums，和一个目标值 target。找出给定目标值在数组中的开始位置和结束位置。
+你的算法时间复杂度必须是 O(log n) 级别。
+如果数组中不存在目标值，返回 [-1, -1]。
+示例 1:
+输入: nums = [5,7,7,8,8,10], target = 8
+输出: [3,4]
+示例 2:
+输入: nums = [5,7,7,8,8,10], target = 6
+输出: [-1,-1]
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/find-first-and-last-position-of-element-in-sorted-array
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+一开始感觉的难点是 1.判断target是否存在于数组中 2.target的范围可能跨越了mid
+是否可以化为寻找第一个大于target的数 和最后小于target的数？
+需要分开两次寻找，然后需要判断mid的左右值来移动
+但是又会遇到边界条件。。。
+似乎只需要判断其中一边
+这道题似乎利用到了mid 的左倾和右倾
+
+但是有问题，比如9 9 9 9 9中找1，那第一个最小值是找不到的（似乎可以在开头加上判断条件）
+
+同时希望修改思路为寻找最左边符合条件的数和最右边符合条件的数
+
+完全可以通过判断条件和左倾右倾来达到寻找最左边符合条件的数和最右边符合条件的数
+
+然后发现完全可以第一次寻找的时候就发现数组中是否有target，可以立即返回{-1,-1}
+
+然后需要判断是否为空empty。。。
+
+最后的话就看看可不可以合并两次查找，虽然时间复杂度符合了但是不够优雅
+
+原思路代码
+```
+ /*
+        原思路
+        while(first<last){
+            mid=first+(last-first)/2;
+            if(nums[mid+1]>=target)
+                last=mid;
+            else first=mid+1;
+        }
+        left=first;
+        first=0,last=nums.size()-1;
+        while(first<last){
+            mid=first+(last-first+1)/2;
+            if(nums[mid-1]<=target)
+                first=mid;
+            else  last=mid-1;
+        }
+        right=first;
+        */
+```
+
+正确代码：
+```
+class Solution {
+public:
+    vector<int> searchRange(vector<int>& nums, int target) {
+        if(nums.empty()||nums[0]>target||nums[nums.size()-1]<target) return vector<int>({-1,-1});
+        int first=0,last=nums.size()-1,mid,left,right;
+        while(first<last){
+            mid=first+(last-first)/2;
+            if(nums[mid]>=target)
+                last=mid;
+            else first=mid+1;
+        }
+        left=first;
+        
+        if(nums[left]!=target)
+            return vector<int>({-1,-1});
+        first=0,last=nums.size()-1;
+         while(first<last){
+            mid=first+(last-first+1)/2;
+            if(nums[mid]<=target)
+                first=mid;
+            else  last=mid-1;
+        }
+        right=first;
+        
+        return vector<int>({left,right});
+            }
+};
+```
+
+题解的话思路一致，还是得使用左倾右倾各自循环一次
+然后就建议反复看[二分查找模板](https://lixin-ee.github.io/post/er-fen-cha-zhao-fa-mo-ban/)
