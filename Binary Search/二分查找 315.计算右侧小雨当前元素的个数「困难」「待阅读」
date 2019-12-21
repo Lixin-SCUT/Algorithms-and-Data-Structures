@@ -1,0 +1,60 @@
+> 给定一个整数数组 nums，按要求返回一个新数组 counts。数组 counts 有该性质： counts[i] 的值是  nums[i] 右侧小于 nums[i] 的元素的数量。
+示例:
+输入: [5,2,6,1]
+输出: [2,1,1,0] 
+解释:
+5 的右侧有 2 个更小的元素 (2 和 1).
+2 的右侧仅有 1 个更小的元素 (1).
+6 的右侧有 1 个更小的元素 (1).
+1 的右侧有 0 个更小的元素.
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/count-of-smaller-numbers-after-self
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+对于这道题，最简单的可能就是暴力法了，直接搜索 时间复杂度就是n^2 优化就得看怎么优化了
+我一开始的想法是对原数组进行排序
+但是同时需要记录原数组的位置，比如5对应0，然后对比排序后数组的位置，比如5对应2，但是这个关系怎么对应起来呢？？？其实不太对劲，比如1排序后是0，但是它在原数组中无论何处都是0
+第二个想法就是排序后记录每个数组当前的最右最小元素值，但是需要更新很多位，比如遇到1需要更新1 2 5 6，遇到2需要更新2 5 6
+还是先实现暴力法吧，幹，暴力法超出时间限制了。。。说明肯定是用了排序法来压低到nlogn了
+只能实现 新增一个空间然后不断二分查找+插入了（但是插入不会超时吗。。。）
+结果是通过了但是时间复杂度确实很高，676ms只击败了5.59%的小伙伴，好好看看题解吧
+
+```
+class Solution {
+public:
+    vector<int> countSmaller(vector<int>& nums) {
+        vector<int> res;
+        vector<int> temp;
+        int len=nums.size();
+        for(int i=len-1;i>=0;--i)
+        {
+            if(temp.empty()){
+                temp.push_back(nums[i]);
+                res.push_back(0);
+                continue;
+            }
+            int loc=binarysearch(temp,nums[i]);
+            res.insert(res.begin(),loc);
+            temp.insert(temp.begin()+loc,nums[i]);            
+        }
+        return res;
+    }
+    
+    int binarysearch(vector<int>& nums,int target){
+        int first=0,last=nums.size()-1,mid;
+        if(target<nums[0]) return 0;
+        if(target>nums[nums.size()-1]) return nums.size();
+        while(first<last){
+            mid=first+(last-first)/2;
+            if(nums[mid]>=target)
+                last=mid;
+            else
+                first=mid+1;
+        }
+        return first;
+    }
+};
+
+```
+
+我实现的方法排在暴力法之后，网友题解中的归并排序法和整理的6种方法都不错，值得阅读，今天实在是太累了，24小时内都没怎么睡好，所以先休息了
