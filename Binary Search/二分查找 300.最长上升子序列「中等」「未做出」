@@ -1,0 +1,109 @@
+> 给定一个无序的整数数组，找到其中最长上升子序列的长度。
+示例:
+输入: [10,9,2,5,3,7,101,18]
+输出: 4 
+解释: 最长的上升子序列是 [2,3,7,101]，它的长度是 4。
+说明:
+可能会有多种最长上升子序列的组合，你只需要输出对应的长度即可。
+你算法的时间复杂度应该为 O(n2) 。
+进阶: 你能将算法的时间复杂度降低到 O(n log n) 吗?
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/longest-increasing-subsequence
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+我一开始的想法是从后往前，每个数向后寻找【第一个大于】自己的数，找到了就将这个数背负的长度+1，然后我发现可以单独存储一个当前最大数
+后来发现这个思路8太行，比如[1,10,9,2,5,3,7,101,18]，第一个1就非得遇到2才行，所以还是必须用额外的数组来存储已经计算了的数组，然后对于一个新数就利用二分法在数组中查找第一个比它大的数，在其基础上将长度+1
+在[1,3,6,7,9,4,10,5,6]这个用例错误了，问题出在第一个6中，第一个6的值是1，但是7是3，所以导致第二个6变成了2而不是4，考虑更新已有数字的次数而不是插入新元素，亦即temp中的数字不会重复出现
+本来想着是直接temp[first+1].second+1，但是需要解决如果是尾元素的问题，比如[4,5,6]插入6
+才发现问题不仅在于6，而是在于3啊，3应该去找6而不是去找5
+会不会从前往后更好？或者两个方向各一次？
+弃疗弃疗！，两个方向的也不行，明显是方法有问题
+幹，看了题解才发现是动态规划+二分查找
+
+错误代码：
+```
+class Solution {
+public:
+     int lengthOfLIS(vector<int>& nums) {
+        int res=0,len=nums.size();     
+        vector<pair<int,int>> temp;
+        for(int i=0;i<len;++i){
+            res=max(res,binarysearch_front(temp,nums[i]));
+        }
+        temp.clear();
+        for(int i=len-1;i>=0;--i){
+            res=max(res,binarysearch_back(temp,nums[i]));
+        }
+        return res;
+    }
+    
+    int binarysearch_back(vector<pair<int,int>> &temp,int target){
+        if(temp.empty()){
+            temp.push_back(make_pair(target,1));
+            return 1;
+        }
+        
+        int first=0,last=temp.size()-1,mid;
+        
+        if(target>temp[last].first){            
+            temp.push_back(make_pair(target,1));
+            return 1;}
+        
+        if(target==temp[last].first)
+            return temp[last].second;
+        
+        while(first<last){
+            mid=first+(last-first)/2;
+            if(temp[mid].first>=target)
+                last=mid;
+            else
+                first=mid+1;
+        }
+        if(temp[first].first==target)
+            //temp.insert(temp.begin()+first,make_pair(target,temp[first].second));
+            temp[first].second=temp[first+1].second+1;
+        else
+            temp.insert(temp.begin()+first,make_pair(target,temp[first].second+1));
+        return temp[first].second;
+        
+    }
+    
+    int binarysearch_front(vector<pair<int,int>> &temp,int target){
+        if(temp.empty()){
+            temp.push_back(make_pair(target,1));
+            return 1;
+        }
+        
+        int first=0,last=temp.size()-1,mid;
+        
+        if(target<temp[first].first){            
+            temp.insert(temp.begin(),make_pair(target,1));
+            return 1;}
+        
+        if(target==temp[first].first)
+            return temp[first].second;
+        
+        while(first<last){
+            mid=first+(last-first+1)/2;
+            if(temp[mid].first<target)
+                first=mid;
+            else
+                last=mid-1;
+        }
+        if(temp[last].first==target)
+            //temp.insert(temp.begin()+first,make_pair(target,temp[first].second));
+        {temp[last].second=temp[last-1].second+1;
+         return temp[last].second;
+        }
+        else
+            temp.insert(temp.begin()+last+1,make_pair(target,temp[last].second+1));
+        return temp[last+1].second;
+        
+    }
+};
+```
+
+12.22笔记：
+这道题我复习的时候只想起了贪心算法+二分查找，动态规划更加方便倒是没想起来，所以还是得多看一下
+然后这道题的题解还是看图比较方便一点，所以直接贴题解链接了
+[动态规划+二分查找 贪心算法+二分查找](https://leetcode-cn.com/problems/longest-increasing-subsequence/solution/dong-tai-gui-hua-er-fen-cha-zhao-tan-xin-suan-fa-p/)
