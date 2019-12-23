@@ -1,0 +1,151 @@
+> 给定一些标记了宽度和高度的信封，宽度和高度以整数对形式 (w, h) 出现。当另一个信封的宽度和高度都比这个信封大的时候，这个信封就可以放进另一个信封里，如同俄罗斯套娃一样。
+请计算最多能有多少个信封能组成一组“俄罗斯套娃”信封（即可以把一个信封放到另一个信封里面）。
+说明:
+不允许旋转信封。
+示例:
+输入: envelopes = [[5,4],[6,4],[6,7],[2,3]]
+输出: 3 
+解释: 最多信封的个数为 3, 组合为: [2,3] => [5,4] => [6,7]。
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/russian-doll-envelopes
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+
+感觉这道题就可以使用上一次的贪心数组+动态规划方法
+但是这道题不要求顺序，比如2，3不需要替换5，4而是可以放在它前面
+但是替换还是需要的，比如假设有6，5和6，7 那么6，5明显比6，7更合适
+只是这个二维判断条件比较麻烦
+首先二分法判断w的位置，然后再判断h是否介于两者之间？发现是不行的，因为h和w本质上没有先后之分，你也可以先比较h再比较w
+我也想过比较面积的方法，但是比如 2 1、3 4、4 3、4 5，这种情况怎么去判断4 3 和 3 4 呢？这种情况里面肯定是3 4好于4 3，但是稍微修改一下顺序，怎么去保证贪心算法一定用3 4去替换4 3呢 
+所以改用动态规划法，将所有元素按面积大小排序，然后就是转化为了300题中的问题，逐个寻找比自己小的信封中可包含的最大值，只不过还需要比较长和宽。
+比如1 2 6 4 5 10 ，10会必须把前面的全部找一遍，直至确认6是最大的（值为3）
+实现快速排序法下标版发现的问题 
+1.忘了定义pivotkey，定义后又忘了用来比较pivotkey<=vi[high] 
+2.先--high再到++low，不小心弄反了 
+3.下标版可以直接mid-1，因为int等于-1没事，迭代器则不能指向begin之前 
+4.记得return low; 
+5.每个while都必须判断low<high，特别是循环中的两个while
+最后发现可以修改快速排序法，用面积进行比较排序，而不用额外缔造一个需要映射到原数组的面积vector< int>，因为面积只在比较排序时有用，而在后面的查找中其实是无用的，只需要对比h和w就好
+执行用时 :848 ms, 在所有 cpp 提交中击败了36.91%的用户
+内存消耗 :15 MB, 在所有 cpp 提交中击败了5.40%的用户
+hhh虽然惨不忍睹，不过一次过还是很开心啊，到时候记得看题解
+
+```
+class Solution {
+public:
+    int maxEnvelopes(vector<vector<int>>& envelopes) {
+        if(envelopes.empty()) return 0;
+        quicksort(envelopes,0,envelopes.size()-1);
+        vector<int> count(envelopes.size(),1);
+        int res=1;
+        for(int i=0;i<envelopes.size();++i){
+            int max_count=1;
+            for(int j=0;j<i;++j){
+                if(envelopes[i][0]>envelopes[j][0]&&envelopes[i][1]>envelopes[j][1])
+                    max_count=max(max_count,count[j]+1);
+            }
+            count[i]=max_count;
+            res=max(res,max_count);
+        }
+
+        return res;
+    }
+    
+    void quicksort(vector<vector<int>>&vi,int beg,int end){
+        if(beg<end){
+            int mid=partition(vi,beg,end);
+            quicksort(vi,beg,mid-1);
+            quicksort(vi,mid+1,end);
+        }
+    }
+    
+    int partition(vector<vector<int>>&vi,int low,int high){
+        int pivotkey=vi[low][0]*vi[low][1];
+        while(low<high){
+            while(low<high&&pivotkey<=vi[high][0]*vi[high][1])
+                --high;
+            swap(vi[low][0],vi[high][0]);
+            swap(vi[low][1],vi[high][1]);
+            while(low<high&&vi[low][0]*vi[low][1]<pivotkey)
+                ++low;
+            swap(vi[low][0],vi[high][0]);
+            swap(vi[low][1],vi[high][1]);
+        }
+        return low;
+    }
+};
+```
+
+网友题解中的贪心算法实现非常不错，解决了我当时提出的 4,3、3,4和4,5之间的问题
+> 先来看一下详解
+这道题的解法是比较巧妙的：
+先对宽度 w 进行升序排序，如果遇到 w 相同的情况，则按照高度 h 降序排序。之后把所有的 h 作为一个数组，在这个数组上计算 LIS 的长度就是答案。
+
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1577068494381.png)
+> 这个子序列就是最优的嵌套方案。
+这个解法的关键在于，对于宽度 w 相同的数对，要对其高度 h 进行降序排序。因为两个宽度相同的信封不能相互包含的，逆序排序保证在 w 相同的数对中最多只选取一个。
+此算法的时间复杂度为 O(NlogN)，因为排序和计算 LIS 各需要 O(NlogN) 的时间。
+空间复杂度为O(N)，因为计算 LIS 的函数中需要一个 top 数组。
+```
+import java.util.Arrays;
+import java.util.Comparator;
+
+public class Solution {
+
+    public int maxEnvelopes(int[][] envelopes) {
+
+        int len = envelopes.length;
+        if (len < 2) {
+            return len;
+        }
+
+        Arrays.sort(envelopes, new Comparator<int[]>() {
+            @Override
+            public int compare(int[] envelope1, int[] envelope2) {
+                if (envelope1[0] != envelope2[0]) {
+                    return envelope1[0] - envelope2[0];
+                }
+                return envelope2[1] - envelope1[1];
+            }
+        });
+
+
+        int[] tail = new int[len];
+        tail[0] = envelopes[0][1];
+
+        // end 表示有序数组 tail 的最后一个已经赋值元素的索引
+        int end = 0;
+
+        for (int i = 1; i < len; i++) {
+            int target = envelopes[i][1];
+
+            if (target > tail[end]) {
+                end++;
+                tail[end] = target;
+            } else {
+                int left = 0;
+                int right = end;
+
+                while (left < right) {
+                    int mid = (left + right) >>> 1;
+                    if (tail[mid] < target) {
+                        left = mid + 1;
+                    } else {
+                        right = mid;
+                    }
+                }
+                tail[left] = target;
+            }
+        }
+        return end + 1;
+    }
+
+}
+
+作者：liweiwei1419
+链接：https://leetcode-cn.com/problems/russian-doll-envelopes/solution/tan-xin-suan-fa-er-fen-cha-zhao-python-dai-ma-java/
+来源：力扣（LeetCode）
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+```
+
+主要核心就是在宽度相等的时候，让高度不能出现“上升的子序列”。即首先按照宽度“升序排序”，在宽度相等的时候，按照高度“降序排序”，然后最后**宽度排好序**了，只需要对**高度**进行最小递增子序列的计算
