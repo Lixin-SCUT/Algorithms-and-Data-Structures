@@ -1,0 +1,112 @@
+前序
+```
+class Solution {
+public:
+    //迭代版
+    vector<int> preorderTraversal(TreeNode* root) {
+        stack<TreeNode*> rNode;
+        vector<int> res;
+        TreeNode* cur;
+        rNode.push(root);
+        while(rNode.size()){
+            cur=rNode.top();
+            rNode.pop();
+            if(cur==NULL)
+                continue;
+            res.push_back(cur->val);
+            rNode.push(cur->right);
+            rNode.push(cur->left);
+        }
+        return res;
+    }
+｝
+```
+需要注意的点
+1.先压入root结点
+2.对cur进行NULL判断
+3.因为栈是先进后出，所以一定要先压入右子树再压入左子树
+
+中序
+```
+class Solution {
+public:   
+    vector<int> inorderTraversal(TreeNode* root){
+        stack<TreeNode*> NodeStack;
+        TreeNode *cur=root;
+        vector<int> res;
+        while(cur||NodeStack.size()){
+            while(cur){
+                NodeStack.push(cur);
+                cur=cur->left;
+            }
+            cur=NodeStack.top();
+            NodeStack.pop();
+            res.push_back(cur->val);
+            cur=cur->right;
+            
+        }
+        return res;
+    }
+   ｝;
+```
+	注意点
+	1.判断条件和处理和前序遍历不同，先压入所有左子树再返回再压入右子树
+	
+二叉树的后序遍历
+```
+class Solution {   
+public:
+    vector<int> postorderTraversal(TreeNode* root) {
+        deque<int> res;
+        stack<TreeNode*> nodestack;
+        TreeNode *cur;
+        nodestack.push(root);
+        while(nodestack.size()){
+            cur=nodestack.top();
+            nodestack.pop();
+            if(!cur)
+                continue;
+            res.push_front(cur->val);
+            nodestack.push(cur->left);
+            nodestack.push(cur->right);
+        }
+        return vector<int>(res.begin(),res.end());
+    }
+	};
+```
+注意点：
+1.这个题解时逆序输出，先输出靠后的元素，比如12345的输出顺序是5-45-345-2345-12345，因此我使用了deque，因为需要push_front，用vector的话很费时（当然用deque的话很费空间）
+2.注意必须先压入left再压入righjt，原因是因为逆序输出，所以配合stack先进后出的话需要右子树后入栈
+
+层次遍历
+```
+class Solution {
+public:
+    vector<vector<int>> levelOrder(TreeNode* root) {
+        vector<vector<int>> res;
+        vector<TreeNode*> cur,next;
+        if(!root) return res;
+        cur.push_back(root);
+        while(cur.size()||next.size()){
+            res.push_back(vector<int>({}));
+            for(auto i:cur){
+                res.back().push_back(i->val);
+                if(i->left)
+                    next.push_back(i->left);
+                if(i->right)
+                    next.push_back(i->right);               
+            }
+            cur=next;
+            next.clear();
+        }
+        return res;
+    }
+		};
+```
+需要注意的点：
+1.其实可以在空间和记录层次之间选择，我选择了前者，因为比较省工
+2.res需要先push_back一个空数组
+3.注意back()返回的是引用，这也解释了为啥很多函数习惯返回引用，否则的话连续调用就全部木大了
+
+
+
