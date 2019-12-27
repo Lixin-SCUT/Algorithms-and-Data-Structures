@@ -1,0 +1,50 @@
+> 给定一个二叉树，检查它是否是镜像对称的。
+> 
+> 例如，二叉树 [1,2,2,3,4,4,3] 是对称的。
+> 
+>     1
+>    / \
+>   2   2
+>  / \ / \
+> 3  4 4  3
+> 但是下面这个 [1,2,2,null,3,null,3] 则不是镜像对称的:
+> 
+>     1
+>    / \
+>   2   2
+>    \   \
+>    3    3
+> 
+> 来源：力扣（LeetCode）
+> 链接：https://leetcode-cn.com/problems/symmetric-tree
+> 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+
+迭代法实现：
+```
+    bool isSymmetric(TreeNode* root){
+        queue<TreeNode*>tree;
+        tree.push(root);
+        tree.push(root);
+        TreeNode *left,*right;
+        while(tree.size()){
+            left=tree.front();
+            tree.pop();
+            right=tree.front();
+            tree.pop();
+            if(left==NULL&&right==NULL) continue;
+            if(left==NULL||right==NULL) return false; 
+            if(left->val!=right->val) return false;
+            tree.push(left->left);
+            tree.push(right->right);
+            tree.push(left->right);
+            tree.push(right->left);                
+        }
+        return true;
+        
+    }
+```
+需要注意的点
+1.一开始我用两个栈来实现的，但是其实参考官方题解利用一个队列就可以了
+2.然后官方的if判断顺序很优雅，比如先if(left==NULL&&right==NULL)再 if(left==NULL||right==NULL)，先排除两个皆为空指针再判断其中一个为空指针的情况，最后就剩下两个都不是null的情况，非常优雅。
+3.这一题我的变量命名比较烂，left和right重用了，还是需要多练习
