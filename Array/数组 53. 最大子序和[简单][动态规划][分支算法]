@@ -1,0 +1,139 @@
+> 给定一个整数数组 nums ，找到一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。
+示例:
+输入: [-2,1,-3,4,-1,2,1,-5,4],
+输出: 6
+解释: 连续子数组 [4,-1,2,1] 的和最大，为 6。
+进阶:
+如果你已经实现复杂度为 O(n) 的解法，尝试使用更为精妙的分治法求解。
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/maximum-subarray
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+很明显的动态规划，然后进阶提示分治法hhh
+首先实现一下动态规划，主要的障碍点在于连续这个点 
+如果是用0和1代表选择和不选择 那么0这个点就不能保存状态 那么今天的状态就等于叠加前一天的值和今天的值之间的最大值了 
+然后注意因为可能会抛弃前面的序列或者后面的序列 比如 [1,-10,2] [2,-10,1]这两种情况存在，所以不可以返回动态规划数组的最后一个值
+必须用一个maxv存放历史最大值
+
+分治法的话我感觉就是先分割到每个数，然后两两结合 返回当[左值，右值，左值+右值]之间的最大值
+但是问题来了， 怎么保证连续呢？类似于归并排序，merge是关键
+分治法还是没有想到好的合并方法，所以直接看题解
+
+```
+class Solution {
+public:
+    int maxSubArray(vector<int>& nums) {
+        int len=nums.size();
+        int res=nums[0];
+        vector<int> maxv(len);
+        maxv[0]=nums[0];
+        for(int i=1;i<len;++i){
+           maxv[i]=max(maxv[i-1]+nums[i],nums[i]);
+            res=max(res,maxv[i]);
+        }
+        return res;
+    }
+
+};
+```
+
+然后来看看题解
+动态规划法没啥好说的了
+比较有趣的是高赞回答
+> 思路
+这道题用动态规划的思路并不难解决，比较难的是后文提出的用分治法求解，但由于其不是最优解法，所以先不列出来
+动态规划的是首先对数组进行遍历，当前最大连续子序列和为 sum，结果为 ans
+如果 sum > 0，则说明 sum 对结果有增益效果，则 sum 保留并加上当前遍历数字
+如果 sum <= 0，则说明 sum 对结果无增益效果，需要舍弃，则 sum 直接更新为当前遍历数字
+每次比较 sum 和 ans的大小，将最大值置为ans，遍历结束返回结果
+时间复杂度：O(n)
+代码
+```
+Java
+class Solution {
+    public int maxSubArray(int[] nums) {
+        int ans = nums[0];
+        int sum = 0;
+        for(int num: nums) {
+            if(sum > 0) {
+                sum += num;
+            } else {
+                sum = num;
+            }
+            ans = Math.max(ans, sum);
+        }
+        return ans;
+    }
+}
+```
+这个思路很有趣，我们一般会想当前元素nums[i]对sum有没有增益，而这个题解要点在于反过来考虑sum对当前元素nums[i]有没有增益
+
+关于分治法我曾经看到一个比较好的题解。。。但是突然找不到了。。。难道是被删了？？？
+主要的要点就是
+> 分治法
+这个是使用分治法解决问题的典型的例子，并且可以用与合并排序相似的算法求解。下面是用分治法解决问题的模板：
+定义基本情况。
+将问题分解为子问题并递归地解决它们。
+合并子问题的解以获得原始问题的解。
+算法：
+当最大子数组有 n 个数字时：
+若 n==1，返回此元素。
+left_sum 为最大子数组前 n/2 个元素，在索引为 (left + right) / 2 的元素属于左子数组。
+right_sum 为最大子数组的右子数组，为最后 n/2 的元素。
+cross_sum 是包含左右子数组且含索引 (left + right) / 2 的最大值。
+
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1577674348344.png)
+```
+class Solution
+{
+public:
+    int maxSubArray(vector<int> &nums)
+    {
+        //类似寻找最大最小值的题目，初始值一定要定义成理论上的最小最大值
+        int result = INT_MIN;
+        int numsSize = int(nums.size());
+        result = maxSubArrayHelper(nums, 0, numsSize - 1);
+        return result;
+    }
+
+    int maxSubArrayHelper(vector<int> &nums, int left, int right)
+    {
+        if (left == right)
+        {
+            return nums[left];
+        }
+        int mid = (left + right) / 2;
+        int leftSum = maxSubArrayHelper(nums, left, mid);
+        //注意这里应是mid + 1，否则left + 1 = right时，会无线循环
+        int rightSum = maxSubArrayHelper(nums, mid + 1, right);
+        int midSum = findMaxCrossingSubarray(nums, left, mid, right);
+        int result = max(leftSum, rightSum);
+        result = max(result, midSum);
+        return result;
+    }
+
+    int findMaxCrossingSubarray(vector<int> &nums, int left, int mid, int right)
+    {
+        int leftSum = INT_MIN;
+        int sum = 0;
+        for (int i = mid; i >= left; i--)
+        {
+            sum += nums[i];
+            leftSum = max(leftSum, sum);
+        }
+
+        int rightSum = INT_MIN;
+        sum = 0;
+        //注意这里i = mid + 1，避免重复用到nums[i]
+        for (int i = mid + 1; i <= right; i++)
+        {
+            sum += nums[i];
+            rightSum = max(rightSum, sum);
+        }
+        return (leftSum + rightSum);
+    }
+};
+```
+
+注意跨中心的情况需要用贪心法进行计算
+始终觉得在这里用分治法怪怪的
