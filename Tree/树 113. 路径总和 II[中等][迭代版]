@@ -1,0 +1,116 @@
+> 给定一个二叉树和一个目标和，找到所有从根节点到叶子节点路径总和等于给定目标和的路径。
+> 说明: 叶子节点是指没有子节点的节点。
+> 示例:
+> 给定如下二叉树，以及目标和 sum = 22，
+>               5
+>              / \
+>             4   8
+>            /   / \
+>           11  13  4
+>          /  \    / \
+>         7    2  5   1
+> 返回:
+> 
+> [
+>    [5,4,11,2],
+>    [5,8,4,5]
+> ]
+> 来源：力扣（LeetCode）
+> 链接：https://leetcode-cn.com/problems/path-sum-ii
+> 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+这道题其实和之前的差不多，只是需要额外地增加一个vector记录路径
+然后主要的点为
+1.改进了sum，直接将sum进行自身递减，省去了一定一个res变量
+2.但是我没想好如何处理vector的问题，既需要一个全局的`vector<vector<int>>`，又需要一个`vector<int>`，导致内存使用量很高
+
+最终代码如下：
+```
+class Solution {
+     vector<vector<int>> vvi;
+
+public:
+    vector<vector<int>> pathSum(TreeNode* root, int sum) {
+        vector<int> vi;
+        preorder(root,sum,vi);
+        return vvi;
+    }
+     void preorder(TreeNode* root, int sum,vector<int> vi) {
+        if(root==NULL)
+            return;
+        sum-=root->val;
+        vi.push_back(root->val);
+        if(root->left==NULL&&root->right==NULL&&!sum)
+            vvi.push_back(vi);
+        preorder(root->left,sum,vi);
+        preorder(root->right,sum,vi);
+        return ;
+    }
+};
+```
+
+迭代版实现：
+```
+class Solution {
+public:
+    vector<vector<int>> pathSum(TreeNode* root, int sum) {
+        stack<TreeNode*> node_stack;
+        stack<int> sum_stack;
+        stack<vector<int>> vi_stack;
+        vector<vector<int>> res;
+        if(root==NULL) return res;
+        node_stack.push(root);
+        sum_stack.push(sum-root->val);
+        vi_stack.push({root->val});
+        TreeNode *cur_node;
+        int cur_sum;
+        vector<int> cur_vi;
+        while(node_stack.size()){
+            cur_node=node_stack.top();
+            node_stack.pop();
+            cur_sum=sum_stack.top();
+            sum_stack.pop();
+            cur_vi=vi_stack.top();
+            vi_stack.pop();
+            if(cur_sum==0&&cur_node->left==NULL&&cur_node->right==NULL)
+                res.push_back(cur_vi);
+            cur_vi.push_back(0);
+            if(cur_node->left){
+                node_stack.push(cur_node->left);
+                sum_stack.push(cur_sum-cur_node->left->val);
+                cur_vi.back()=cur_node->left->val;
+                vi_stack.push(cur_vi);
+            }
+            if(cur_node->right){
+                node_stack.push(cur_node->right);
+                sum_stack.push(cur_sum-cur_node->right->val);
+                cur_vi.back()=cur_node->right->val;
+                vi_stack.push(cur_vi);
+            }
+        }
+        return res;
+    }
+};
+```
+使用了三个stack，但是如果减少一个sum_stack就得对vector求和，不是很想用这个。
+题解中的迭代法也是类似的，没有特别好的解法，就不贴上来了
+然后来看一下网友题解：
+```
+class Solution {
+    public List<List<Integer>> pathSum(TreeNode root, int sum) {
+        List<List<Integer>> res = new ArrayList<>();
+        helper(root, sum, res, new ArrayList<Integer>());
+        return res;
+    }
+
+    private void helper(TreeNode root, int sum, List<List<Integer>> res, ArrayList<Integer> tmp) {
+        if (root == null) return;
+        tmp.add(root.val);
+        if (root.left == null && root.right == null && sum - root.val == 0) res.add(new ArrayList<>(tmp));
+        helper(root.left, sum - root.val, res, tmp);
+        helper(root.right, sum - root.val, res, tmp);
+        tmp.remove(tmp.size() - 1);
+    }
+}
+```
+感觉这个和我的差不多呀。。。。所以好像没什么特别好的方法能降低空间复杂度了
