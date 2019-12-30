@@ -19,35 +19,6 @@
 > 链接：https://leetcode-cn.com/problems/path-sum-ii
 > 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
 
-这道题其实和之前的差不多，只是需要额外地增加一个vector记录路径
-然后主要的点为
-1.改进了sum，直接将sum进行自身递减，省去了一定一个res变量
-2.但是我没想好如何处理vector的问题，既需要一个全局的`vector<vector<int>>`，又需要一个`vector<int>`，导致内存使用量很高
-
-最终代码如下：
-```
-class Solution {
-     vector<vector<int>> vvi;
-
-public:
-    vector<vector<int>> pathSum(TreeNode* root, int sum) {
-        vector<int> vi;
-        preorder(root,sum,vi);
-        return vvi;
-    }
-     void preorder(TreeNode* root, int sum,vector<int> vi) {
-        if(root==NULL)
-            return;
-        sum-=root->val;
-        vi.push_back(root->val);
-        if(root->left==NULL&&root->right==NULL&&!sum)
-            vvi.push_back(vi);
-        preorder(root->left,sum,vi);
-        preorder(root->right,sum,vi);
-        return ;
-    }
-};
-```
 
 迭代版实现：
 ```
@@ -94,23 +65,3 @@ public:
 ```
 使用了三个stack，但是如果减少一个sum_stack就得对vector求和，不是很想用这个。
 题解中的迭代法也是类似的，没有特别好的解法，就不贴上来了
-然后来看一下网友题解：
-```
-class Solution {
-    public List<List<Integer>> pathSum(TreeNode root, int sum) {
-        List<List<Integer>> res = new ArrayList<>();
-        helper(root, sum, res, new ArrayList<Integer>());
-        return res;
-    }
-
-    private void helper(TreeNode root, int sum, List<List<Integer>> res, ArrayList<Integer> tmp) {
-        if (root == null) return;
-        tmp.add(root.val);
-        if (root.left == null && root.right == null && sum - root.val == 0) res.add(new ArrayList<>(tmp));
-        helper(root.left, sum - root.val, res, tmp);
-        helper(root.right, sum - root.val, res, tmp);
-        tmp.remove(tmp.size() - 1);
-    }
-}
-```
-感觉这个和我的差不多呀。。。。所以好像没什么特别好的方法能降低空间复杂度了
