@@ -1,0 +1,223 @@
+> 假设你正在爬楼梯。需要 n 阶你才能到达楼顶。
+每次你可以爬 1 或 2 个台阶。你有多少种不同的方法可以爬到楼顶呢？
+注意：给定 n 是一个正整数。
+示例 1：
+输入： 2
+输出： 2
+解释： 有两种方法可以爬到楼顶。
+1.1 阶 + 1 阶
+2.2 阶
+示例 2：
+输入： 3
+输出： 3
+解释： 有三种方法可以爬到楼顶。
+1.1 阶 + 1 阶 + 1 阶
+2.1 阶 + 2 阶
+3.2 阶 + 1 阶
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/climbing-stairs
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+有点像动态规划
+等等！怎么那么像排列组合？！
+列出全部为1的情况，然后随机对1进行组合
+不对，首先我将其视为一棵树，左子树+1，右子树+2，当叶节点大于等于n的时候就将次数增加1
+尴尬，代码是对的，但是超出时间限制了
+然后想想对称地用队列的方法 继续翻车超出时间限制
+接下来就是动态规划了，我的想法是对于一个全为1的序列，如果前一个1没选择组合为2的话，当前的1就可以选择组合成2或者保持为1，否则只能保持1
+动态规划也翻车了
+还是好好看看题解吧，其实是斐波那契的问题，但是树的优化也很值得看看
+
+注意实现动态规划时，初始状态是0步而不是1步，所以n=2是是level[0]+level[1]所以需要数组n+1
+
+
+```
+class Solution {
+public:
+    int climbStairs(int n) {
+        vector<int> level(n+1,1);
+        for(int i=2;i<n+1;++i)
+            level[i]=level[i-1]+level[i-2];
+        return level.back();
+    }
+};
+```
+超时代码：
+```
+/*
+class Solution {
+public:
+    int count=0;
+    int climbStairs(int n) {
+        add1(0,n);
+        add2(0,n); 
+        return count;
+    }
+    
+    void add1(int i,int n){
+        ++i;
+        if(i==n){
+            ++count;
+            return;
+        }
+        if(i>n)
+            return;
+        add1(i,n);
+        add2(i,n);
+    }
+    
+    void add2(int i,int n){
+        i+=2;
+        if(i==n){
+            ++count;
+            return;
+        }
+        if(i>n)
+            return;
+        add1(i,n);
+        add2(i,n);          
+    }
+};
+*/
+ /*
+    int climbStairs(int n) {
+        int count=0;
+        queue<int> nums;
+        nums.push(n);
+        while(!nums.empty()){
+            int temp=nums.front();
+            nums.pop();
+            if(temp-1==0)
+                ++count;
+            if(temp-2==0)
+                ++count;
+            if(temp-1>0)
+                nums.push(temp-1);
+            if(temp-2>0)
+                nums.push(temp-2);
+        }
+        return count;  
+    }
+    */
+```
+
+然后是题解：
+> 摘要
+假设你正在爬楼梯，需要 n 阶你才能到达楼顶。
+每次你可以爬 1 或 2 个台阶，你有多少种不同的方法可以爬到楼顶呢？
+解决方案
+
+> 方法一：暴力法
+算法
+在暴力法中，我们将会把所有可能爬的阶数进行组合，也就是 1 和 2 。而在每一步中我们都会继续调用 climbStairs这个函数模拟爬 1 阶和 2 阶的情形，并返回两个函数的返回值之和。
+climbStairs(i,n)=(i + 1, n) + climbStairs(i + 2, n)
+其中 i 定义了当前阶数，而 n 定义了目标阶数。
+```
+Java
+public class Solution {
+    public int climbStairs(int n) {
+        climb_Stairs(0, n);
+    }
+    public int climb_Stairs(int i, int n) {
+        if (i > n) {
+            return 0;
+        }
+        if (i == n) {
+            return 1;
+        }
+        return climb_Stairs(i + 1, n) + climb_Stairs(i + 2, n);
+    }
+}
+```
+> 复杂度分析
+时间复杂度：O(2^n )，树形递归的大小为 2^n2   
+空间复杂度：O(n)，递归树的深度可以达到 n 。
+
+> 方法二：记忆化递归
+算法
+在上一种方法中，我们计算每一步的结果时出现了冗余。另一种思路是，我们可以把每一步的结果存储在 memo 数组之中，每当函数再次被调用，我们就直接从 memo 数组返回结果。
+在 memo 数组的帮助下，我们得到了一个修复的递归树，其大小减少到 n。
+```
+Java
+public class Solution {
+    public int climbStairs(int n) {
+        int memo[] = new int[n + 1];
+        return climb_Stairs(0, n, memo);
+    }
+    public int climb_Stairs(int i, int n, int memo[]) {
+        if (i > n) {
+            return 0;
+        }
+        if (i == n) {
+            return 1;
+        }
+        if (memo[i] > 0) {
+            return memo[i];
+        }
+        memo[i] = climb_Stairs(i + 1, n, memo) + climb_Stairs(i + 2, n, memo);
+        return memo[i];
+    }
+}
+```
+> 复杂度分析
+时间复杂度：O(n)，树形递归的大小可以达到 n。
+空间复杂度：O(n)，递归树的深度可以达到 n。
+
+> 方法三：动态规划
+算法
+不难发现，这个问题可以被分解为一些包含最优子结构的子问题，即它的最优解可以从其子问题的最优解来有效地构建，我们可以使用动态规划来解决这一问题。
+第 i 阶可以由以下两种方法得到：
+在第 (i−1) 阶后向上爬一阶。
+在第 (i−2) 阶后向上爬 2 阶。
+所以到达第 i 阶的方法总数就是到第(i−1) 阶和第 (i−2) 阶的方法数之和。
+令 dp[i] 表示能到达第 i 阶的方法总数：
+dp[i]=dp[i−1]+dp[i−2]
+```
+public class Solution {
+    public int climbStairs(int n) {
+        if (n == 1) {
+            return 1;
+        }
+        int[] dp = new int[n + 1];
+        dp[1] = 1;
+        dp[2] = 2;
+        for (int i = 3; i <= n; i++) {
+            dp[i] = dp[i - 1] + dp[i - 2];
+        }
+        return dp[n];
+    }
+}
+```
+> 复杂度分析
+时间复杂度：O(n)，单循环到 n 。
+空间复杂度：O(n)，dp 数组用了 n 的空间。
+
+> 方法四：斐波那契数
+算法
+在上述方法中，我们使用 dp 数组，其中 dp[i]=dp[i-1]+dp[i-2]。可以很容易通过分析得出dp[i] 其实就是第 ii 个斐波那契数。
+Fib(n)=Fib(n−1)+Fib(n−2)
+现在我们必须找出以 1 和 2 作为第一项和第二项的斐波那契数列中的第 n 个数，也就是说 Fib(1)=1Fib(1)=1 且 Fib(2)=2Fib(2)=2。
+```
+Java
+public class Solution {
+    public int climbStairs(int n) {
+        if (n == 1) {
+            return 1;
+        }
+        int first = 1;
+        int second = 2;
+        for (int i = 3; i <= n; i++) {
+            int third = first + second;
+            first = second;
+            second = third;
+        }
+        return second;
+    }
+}
+```
+> 复杂度分析
+时间复杂度：O(n)，单循环到 n，需要计算第 n 个斐波那契数。
+空间复杂度：O(1)，使用常量级空间。
+
+下面的就很数学了，在面试中说出来就明显是刷题的了，所以就不贴了
+
