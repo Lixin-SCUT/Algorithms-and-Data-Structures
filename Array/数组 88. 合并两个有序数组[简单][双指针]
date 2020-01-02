@@ -1,0 +1,152 @@
+> 给定两个有序整数数组 nums1 和 nums2，将 nums2 合并到 nums1 中，使得 num1 成为一个有序数组。
+说明:
+初始化 nums1 和 nums2 的元素数量分别为 m 和 n。
+你可以假设 nums1 有足够的空间（空间大小大于或等于 m + n）来保存 nums2 中的元素。
+示例:
+输入:
+nums1 = [1,2,3,0,0,0], m = 3
+nums2 = [2,5,6],       n = 3
+输出: [1,2,2,3,5,6]
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/merge-sorted-array
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+和stl中的merge相比主要是没有额外的空间，如果强行双指针的话会导致被覆盖的问题。
+我的第一想法居然是copy过去然后排序hhh 但是时间复杂度估计会爆炸
+第二想法是把nums1后移n位，然后merge
+第三想法就是希望避免后移,本来以为交换就好，但是似乎[2,5,6,0,0,0]和[1,2,3]这种就很麻烦，所以没想好
+卧槽！！！原来是从后往前合并！！！666啊 所以还是差一步没想到啊
+然后复现官方题解时发现一个坑是判断条件中必须是>=begin而不能是!=begin，因为从前往后是有last这个尾后位置兜底，但是begin可没法再退一位了
+然后同样是begin的问题，在复现官方的从后往前时遇到一个挺恶心的点，就是如果nums2为空，官网用下标的话会指向-1下标值，而相对应地我的迭代器指向了begin之前，就必须额外先判断nums2是否为空
+
+自己实现的代码：
+```
+    void merge(vector<int>& nums1, int m, vector<int>& nums2, int n) {
+        for(int i=m-1;i>=0;--i)
+            nums1[i+n]=nums1[i];
+        auto p=nums1.begin(),p1=nums1.begin()+n,p2=nums2.begin();
+        while(p1!=nums1.end()&&p2!=nums2.end()){
+            if(*p2<=*p1)
+                *(p++)=*(p2++);
+            else
+                *(p++)=*(p1++);          
+        }
+        if(p2!=nums2.end())
+            while(p2!=nums2.end())
+                *(p++)=*(p2++);
+    }
+```
+
+参考官方题解实现的代码：
+```
+class Solution {
+public:
+    void merge(vector<int>& nums1, int m, vector<int>& nums2, int n) {
+        if(nums2.empty()) return;
+        auto p=nums1.end()-1,p1=p-n,p2=nums2.end()-1;   
+        while(p1>=nums1.begin()&&p2>=nums2.begin()){
+            if(*p1>=*p2){
+                *p=*p1;
+                --p1;
+            }else{
+                *p=*p2;
+                --p2;  
+            }
+           --p;
+        }
+
+        if(p2>=nums2.begin()){
+            while(p2>=nums2.begin()){
+            *p=*p2;
+            --p2; 
+            --p;
+            }
+        }
+    }
+   
+};
+```
+
+然后是官方题解
+
+> 方法一 : 合并后排序
+最朴素的解法就是将两个数组合并之后再排序。该算法只需要一行(Java是2行)，时间复杂度较差，为O((n+m)log(n+m))。这是由于这种方法没有利用两个数组本身已经有序这一点。
+实现
+```
+Java
+class Solution {
+  public void merge(int[] nums1, int m, int[] nums2, int n) {
+    System.arraycopy(nums2, 0, nums1, m, n);
+    Arrays.sort(nums1);
+  }
+}
+```
+> 复杂度分析
+时间复杂度 : O((n+m)log(n+m))。
+空间复杂度 : O(1)。
+
+> 方法二 : 双指针 / 从前往后
+一般而言，对于有序数组可以通过双指针法 达到O(n+m)的时间复杂度。
+最直接的算法实现是将指针p1 置为 nums1的开头， p2为 nums2的开头，在每一步将最小值放入输出数组中。
+由于 nums1 是用于输出的数组，需要将nums1中的前m个元素放在其他地方，也就需要 O(m) 的空间复杂度。
+```
+class Solution {
+  public void merge(int[] nums1, int m, int[] nums2, int n) {
+    // Make a copy of nums1.
+    int [] nums1_copy = new int[m];
+    System.arraycopy(nums1, 0, nums1_copy, 0, m);
+
+    // Two get pointers for nums1_copy and nums2.
+    int p1 = 0;
+    int p2 = 0;
+
+    // Set pointer for nums1
+    int p = 0;
+
+    // Compare elements from nums1_copy and nums2
+    // and add the smallest one into nums1.
+    while ((p1 < m) && (p2 < n))
+      nums1[p++] = (nums1_copy[p1] < nums2[p2]) ? nums1_copy[p1++] : nums2[p2++];
+
+    // if there are still elements to add
+    if (p1 < m)
+      System.arraycopy(nums1_copy, p1, nums1, p1 + p2, m + n - p1 - p2);
+    if (p2 < n)
+      System.arraycopy(nums2, p2, nums1, p1 + p2, m + n - p1 - p2);
+  }
+}
+```
+> 复杂度分析
+时间复杂度 : O(n+m)。
+空间复杂度 : O(m)。
+
+> 方法三 : 双指针 / 从后往前
+方法二已经取得了最优的时间复杂度O(n+m)，但需要使用额外空间。这是由于在从头改变nums1的值时，需要把nums1中的元素存放在其他位置。
+如果我们从结尾开始改写 nums1 的值又会如何呢？这里没有信息，因此不需要额外空间。
+这里的指针 p 用于追踪添加元素的位置。
+实现
+```
+Java
+class Solution {
+  public void merge(int[] nums1, int m, int[] nums2, int n) {
+    // two get pointers for nums1 and nums2
+    int p1 = m - 1;
+    int p2 = n - 1;
+    // set pointer for nums1
+    int p = m + n - 1;
+
+    // while there are still elements to compare
+    while ((p1 >= 0) && (p2 >= 0))
+      // compare two elements from nums1 and nums2 
+      // and add the largest one in nums1 
+      nums1[p--] = (nums1[p1] < nums2[p2]) ? nums2[p2--] : nums1[p1--];
+
+    // add missing elements from nums2
+    System.arraycopy(nums2, 0, nums1, 0, p2 + 1);
+  }
+}
+```
+> 复杂度分析
+时间复杂度 : O(n+m)。
+空间复杂度 : O(1)。
+
