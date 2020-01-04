@@ -76,6 +76,26 @@ public:
 
 回溯法实现
 ```
+     vector<vector<int>> subsets(vector<int>& nums){
+        vector<int> temp;
+        vector<vector<int>> res;
+        if(nums.empty()) return res;
+        subset_recur(nums,temp,res,0);
+        return res;
+    }
+    
+    void subset_recur(vector<int>& nums,vector<int> temp,vector<vector<int>> &res,int level){
+        if(temp.size()<=nums.size())
+            res.push_back(temp);
+        
+        for(int i=level;i<nums.size();++i){
+            temp.push_back(nums[i]);
+            subset_recur(nums,temp,res,i+1);//注意这里不是level+1，而是i+1！！！
+            temp.pop_back();
+        }
+    }
+```
+```
     vector<vector<int>> subsets(vector<int>& nums){
         vector<int> temp;
         vector<vector<int>> res;
