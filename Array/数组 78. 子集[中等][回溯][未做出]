@@ -1,0 +1,226 @@
+> 给定一组不含重复元素的整数数组 nums，返回该数组所有可能的子集（幂集）。
+说明：解集不能包含重复的子集。
+示例:
+输入: nums = [1,2,3]
+输出:
+[
+  [3],
+  [1],
+  [2],
+  [1,2,3],
+  [1,3],
+  [2,3],
+  [1,2],
+  []
+]
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/subsets
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+【未做出】
+我的想法是循环数组，每遇到一个数n，就把1，2，3...到n之间的数组添加进结果里面，比如1,2,3...n、2,3...n、3...n直至n-1,n和n就结束了
+然后空集最好单独加进去
+然后我想用迭代器添加，注意迭代器的范围都是左闭右开的！所以右区间是nums.begin()+i+1
+傻逼了，这种方法没法添加[1,3]这种情况啊，只是给出了有序子集而已
+时间复杂度比较高，但是暂时没想出来可以怎么优化
+没想出来，省点时间看题解吧，其实发现题解还是蛮简单的，还是自己做题量不够啊
+比如可以直接遍历，遇到一个数就把旧子集加上该数组成新的子集再和旧子集合并，遍历完毕即是所有子集
+然后遇到一个很搞笑的问题，在下面的循环中，我遍历res，却又不断往res里面push_back，变相地无限循环了。。。
+```
+            for(auto v:res){
+                vector<int> temp=v;
+                temp.push_back(nums[i]);
+                res.push_back(temp);
+            }   
+```
+然后我想尝试`res.push_back(res[j].push_back[nums[i]]);`直接翻车了，
+多看看其他题解吧唉
+	
+```
+class Solution {
+public:
+    vector<vector<int>> subsets(vector<int>& nums) {
+        vector<vector<int>> res;
+        res.push_back(vector<int>());
+        for(int i=0;i<nums.size();++i){
+            int len=res.size();
+            for(int j=0;j<len;++j){
+                vector<int> temp=res[j];
+                temp.push_back(nums[i]);
+                res.push_back(temp);
+            }         
+        }
+        return res;
+    }
+};
+```
+
+然后看看网友题解：
+思路分析：
+这道题告诉我们整数数组 nums 不包含重复元素。因此作图，画出递归树结构是关键。
+因为是组合问题，所以我们按顺序读字符，就不需要设置 used 数组；
+经过分析，我们知道，在根结点、非叶子结点和叶子结点都需要结算，因此 res.apppend(path[:]) 就要放在“中间”位置。
+方法一：回溯
+回溯的过程是执行一次深度优先遍历，一条路走到底，走不通的时候，返回回来，继续执行，一直这样下去，直到回到起点。
+参考代码 1：在回溯的过程中记录结点。
+```
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class Solution {
+
+    private List<List<Integer>> res;
+
+    private void find(int[] nums, int begin, List<Integer> pre) {
+        // 没有显式的递归终止
+        res.add(new ArrayList<>(pre));// 注意：Java 的引用传递机制，这里要 new 一下
+        for (int i = begin; i < nums.length; i++) {
+            pre.add(nums[i]);
+            find(nums, i + 1, pre);
+            pre.remove(pre.size() - 1);// 组合问题，状态在递归完成后要重置
+        }
+    }
+
+    public List<List<Integer>> subsets(int[] nums) {
+        int len = nums.length;
+        res = new ArrayList<>();
+        if (len == 0) {
+            return res;
+        }
+        List<Integer> pre = new ArrayList<>();
+        find(nums, 0, pre);
+        return res;
+    }
+}
+```
+参考代码 2：在回溯的过程中记录深度。
+```
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
+
+public class Solution {
+
+    public List<List<Integer>> subsets(int[] nums) {
+        int size = nums.length;
+        List<List<Integer>> res = new ArrayList<>();
+        if (size == 0) {
+            return res;
+        }
+        Stack<Integer> stack = new Stack<>();
+        for (int i = 0; i < size + 1; i++) {
+            dfs(nums, 0, i, stack, res);
+        }
+        return res;
+    }
+
+    private void dfs(int[] nums, int start, int depth, Stack<Integer> path, List<List<Integer>> res) {
+        if (depth == path.size()) {
+            res.add(new ArrayList<>(path));
+            return;
+        }
+        for (int i = start; i < nums.length; i++) {
+            path.add(nums[i]);
+            dfs(nums, i + 1, depth, path, res);
+            path.pop();
+        }
+    }
+
+    public static void main(String[] args) {
+        int[] nums = {1, 2, 3};
+        Solution solution = new Solution();
+        List<List<Integer>> subsets = solution.subsets(nums);
+        System.out.println(subsets);
+    }
+}
+```
+在画树形图的时候，如果新看到的一个数选与不选，可以画出另一棵递归树，这样所有的组合就落在叶子结点处。
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1578101463831.png)
+```
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
+
+/**
+ * @author liweiwei1419
+ * @date 2019/10/30 5:26 下午
+ */
+public class Solution8 {
+
+
+    public List<List<Integer>> subsets(int[] nums) {
+        List<List<Integer>> res = new ArrayList<>();
+        int len = nums.length;
+        if (len == 0) {
+            return res;
+        }
+        Stack<Integer> stack = new Stack<>();
+        dfs(nums, 0, len, stack, res);
+        return res;
+    }
+
+    private void dfs(int[] nums, int index, int len,
+                     Stack<Integer> stack, List<List<Integer>> res) {
+        if (index == len) {
+            res.add(new ArrayList<>(stack));
+            return;
+        }
+        // 当前数可选，也可以不选
+
+        // 不选，直接进入下一层
+        dfs(nums, index + 1, len, stack, res);
+
+        // 选了有，进入下一层
+        stack.add(nums[index]);
+        dfs(nums, index + 1, len, stack, res);
+        stack.pop();
+    }
+
+    public static void main(String[] args) {
+        int[] nums = {1, 2, 3};
+        Solution8 solution7 = new Solution8();
+        List<List<Integer>> subsets = solution7.subsets(nums);
+        System.out.println(subsets);
+    }
+}
+```
+
+方法二：使用位掩码
+数组的每个元素，可以有两个状态：
+
+1、不在子数组中（用 00 表示）；
+2、在子数组中（用 11 表示）。
+
+从 0 到 2 的数组个数次幂（不包括）的整数的二进制表示就能表示所有状态的组合。
+```
+import java.util.ArrayList;
+import java.util.List;
+
+public class Solution5 {
+
+    public List<List<Integer>> subsets(int[] nums) {
+        int size = nums.length;
+        int n = 1 << size;
+        List<List<Integer>> res = new ArrayList<>();
+
+        for (int i = 0; i < n; i++) {
+            List<Integer> cur = new ArrayList<>();
+            for (int j = 0; j < size; j++) {
+                if (((i >> j) & 1) == 1) {
+                    cur.add(nums[j]);
+                }
+            }
+            res.add(cur);
+        }
+        return res;
+    }
+
+    public static void main(String[] args) {
+        int[] nums = {1, 2, 3};
+        Solution5 solution5 = new Solution5();
+        List<List<Integer>> subsets = solution5.subsets(nums);
+        System.out.println(subsets);
+    }
+}
+```
