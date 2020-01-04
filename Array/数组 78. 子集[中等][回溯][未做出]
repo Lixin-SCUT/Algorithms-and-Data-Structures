@@ -55,6 +55,48 @@ public:
 };
 ```
 
+位运算实现：
+```
+    vector<vector<int>> subsets(vector<int>& nums){
+        vector<vector<int>> res;
+        int len=nums.size();
+        if(len==0) return res;
+        int n=1<<len;
+        for(int i=0;i<n;++i){
+            vector<int> temp;
+            for(int j=0;j<len;++j){
+                if((i>>j)&1==1)
+                    temp.push_back(nums[j]);
+            }
+            res.push_back(temp);
+        }
+        return res;
+    }
+```
+
+回溯法实现
+```
+    vector<vector<int>> subsets(vector<int>& nums){
+        vector<int> temp;
+        vector<vector<int>> res;
+        if(nums.empty()) return res;
+        subset_recur(nums,temp,res,0);
+        return res;
+    }
+    
+    void subset_recur(vector<int>& nums,vector<int> temp,vector<vector<int>> &res,int i){
+        if(i==nums.size()){
+            res.push_back(temp);
+            return;
+        }
+        subset_recur(nums,temp,res,i+1);
+        temp.push_back(nums[i]);
+        subset_recur(nums,temp,res,i+1);
+        return;
+    }
+```
+
+
 然后看看网友题解：
 思路分析：
 这道题告诉我们整数数组 nums 不包含重复元素。因此作图，画出递归树结构是关键。
