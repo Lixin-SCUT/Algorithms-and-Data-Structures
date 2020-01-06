@@ -1,0 +1,127 @@
+> 给定一个二叉树, 找到该树中两个指定节点的最近公共祖先。
+百度百科中最近公共祖先的定义为：“对于有根树 T 的两个结点 p、q，最近公共祖先表示为一个结点 x，满足 x 是 p、q 的祖先且 x 的深度尽可能大（一个节点也可以是它自己的祖先）。”
+例如，给定如下二叉树:  root = [3,5,1,6,2,0,8,null,null,7,4]
+示例 1:
+输入: root = [3,5,1,6,2,0,8,null,null,7,4], p = 5, q = 1
+输出: 3
+解释: 节点 5 和节点 1 的最近公共祖先是节点 3。
+示例 2:
+输入: root = [3,5,1,6,2,0,8,null,null,7,4], p = 5, q = 4
+输出: 5
+解释: 节点 5 和节点 4 的最近公共祖先是节点 5。因为根据定义最近公共祖先节点可以为节点本身。
+说明:
+所有节点的值都是唯一的。
+p、q 为不同节点且均存在于给定的二叉树中。
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/lowest-common-ancestor-of-a-binary-tree
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处
+
+迭代版实现【未做出】
+```
+    //利用连接父节点的回溯迭代法
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q){
+        unordered_map<TreeNode*,TreeNode*> parent_node;
+        queue<TreeNode*> node_queue;
+        node_queue.push(root);
+        TreeNode *cur;
+        parent_node.insert({root,NULL});//不要漏掉头节点
+        while(!parent_node.count(p)||!parent_node.count(q)){
+            cur=node_queue.front();
+            node_queue.pop();
+            if(cur->left){
+                parent_node.insert({cur->left,cur});
+                node_queue.push(cur->left);
+            }
+            if(cur->right){
+                parent_node.insert({cur->right,cur});
+                node_queue.push(cur->right);
+            }
+        }
+        
+        set<TreeNode*> p_parent;
+        cur=p;
+        p_parent.insert(cur);//不要漏掉自身
+        while(parent_node.count(cur))
+            p_parent.insert(parent_node[cur]),cur=parent_node[cur];
+        cur=q;
+        while(p_parent.count(cur)==0)
+            cur=parent_node[cur];
+        return cur;
+    }
+    
+    bool get=false;
+    TreeNode *res=NULL;
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        preorder(root,p,q);
+        return res;
+    }
+    
+    bool preorder(TreeNode* cur,TreeNode* p, TreeNode* q){
+        if(cur==NULL)
+            return false;
+        if(get)
+            return false;
+        bool l=preorder(cur->left,p,q);
+        bool r=preorder(cur->right,p,q);
+        if(!get&&l&&r){
+            get=true;
+            res=cur;
+            return false;
+        }
+        if(!get&&(l||r)&&(cur==p||cur==q)){
+            get=true;
+            res=cur;
+            return false;
+        }
+        return (cur==p||cur==q)||l||r;  
+    }
+```
+没有实现的无父节点迭代版，一直超时，找不出原因，暂且归为待阅读
+```
+		//注意全局变量必须定义在外部
+    static int BOTH_PEND=2; 
+    static int LEFT_DONE=1;
+    static int BOTH_DONE=0;
+class Solution {
+public: 
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q){
+        stack<pair<TreeNode*,int>> node_stack;
+        node_stack.push({root,BOTH_PEND});
+        bool one_node_found=false;
+        TreeNode* LCA=NULL;
+        TreeNode* child_node=NULL;
+        
+        while(node_stack.size()){
+            pair<TreeNode*,int> top=node_stack.top();
+            TreeNode *parent_node=top.first;
+            int parent_state=top.second;
+            
+            if(parent_state!=BOTH_DONE){
+                if(parent_state==BOTH_PEND){
+                    if(parent_node==q||parent_node==p){
+                        if(one_node_found){
+                            return LCA;
+                        }else{
+                            one_node_found=true;
+                            LCA=node_stack.top().first;
+                        }
+                    }
+                    child_node=parent_node->left;
+                }else{
+                    child_node=parent_node->right;
+                }
+                node_stack.pop();
+                node_stack.push({parent_node,parent_state-1});
+                if(child_node!=NULL)
+                    node_stack.push({child_node,BOTH_PEND});
+            }else{
+                if(LCA==node_stack.top().first&&one_node_found){
+                 node_stack.pop();
+                 LCA=node_stack.top().first;
+                }
+            }
+        }  
+        return NULL;
+    }
+    
+```
