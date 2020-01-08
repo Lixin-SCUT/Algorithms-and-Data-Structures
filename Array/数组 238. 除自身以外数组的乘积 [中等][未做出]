@@ -1,0 +1,65 @@
+> 给定长度为 n 的整数数组 nums，其中 n > 1，返回输出数组 output ，其中 output[i] 等于 nums 中除 nums[i] 之外其余各元素的乘积。
+示例:
+输入: [1,2,3,4]
+输出: [24,12,8,6]
+说明: 请不要使用除法，且在 O(n) 时间复杂度内完成此题。
+进阶：
+你可以在常数空间复杂度内完成这个题目吗？（ 出于对空间复杂度分析的目的，输出数组不被视为额外空间。）
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/product-of-array-except-self
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+【未做出】
+第一眼：很简单嘛，利用前一个的值不就行了嘛！然后突然发现不能用除法hhh
+然后第二个难点在于线性时间复杂度，那就说明不能每个元素单独进行计算，比如1的时候算2x3x4 2的时候算1x3x4。必须把计算结果重复利用起来
+
+完全没思路啊！！！时间复杂度一直没想好是怎么降低到线性，而且也没有常数空间复杂度的想法，好菜啊！！！
+偷看题解发现是左积和右积？
+不是很懂
+看完题解后才发现太秀了吧
+我有一个问题是忘了使用输出数组这个空间和线性时间复杂度不一定是一次n，可以多次n的嘛
+不过题解的思想确实是很巧妙
+然后我在复现题解的时候用了for范围语句和for+迭代器，结果忘了要同时读取res和nums，结果全部木大hhh。下标发看起来很复杂但还是最通用的
+
+网友题解实现
+```
+class Solution {
+public:
+    vector<int> productExceptSelf(vector<int>& nums) {
+        int len=nums.size();
+        vector<int> res(len,1);
+        int k=1;
+        for(auto i=0;i<len;++i){
+            res[i]=res[i]*k;
+            k*=nums[i];
+        }
+        k=1;
+        for(auto i=len-1;i>=0;--i){
+            res[i]=res[i]*k;
+            k*=nums[i];
+        }
+        return res;
+    }
+};
+```
+
+网友题解
+乘积 = 当前数左边的乘积 * 当前数右边的乘积
+```
+class Solution {
+    public int[] productExceptSelf(int[] nums) {
+        int[] res = new int[nums.length];
+        int k = 1;
+        for(int i = 0; i < res.length; i++){
+            res[i] = k;
+            k = k * nums[i]; // 此时数组存储的是除去当前元素左边的元素乘积
+        }
+        k = 1;
+        for(int i = res.length - 1; i >= 0; i--){
+            res[i] *= k; // k为该数右边的乘积。
+            k *= nums[i]; // 此时数组等于左边的 * 该数右边的。
+        }
+        return res;
+    }
+}
+```
