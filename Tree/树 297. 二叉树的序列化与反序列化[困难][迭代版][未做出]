@@ -1,0 +1,74 @@
+> 序列化是将一个数据结构或者对象转换为连续的比特位的操作，进而可以将转换后的数据存储在一个文件或者内存中，同时也可以通过网络传输到另一个计算机环境，采取相反方式重构得到原数据。
+请设计一个算法来实现二叉树的序列化与反序列化。这里不限定你的序列 / 反序列化算法执行逻辑，你只需要保证一个二叉树可以被序列化为一个字符串并且将这个字符串反序列化为原始的树结构。
+示例: 
+你可以将以下二叉树：
+    1
+   / \
+  2   3
+     / \
+    4   5
+序列化为 "[1,2,3,null,null,4,5]"
+提示: 这与 LeetCode 目前使用的方式一致，详情请参阅 LeetCode 序列化二叉树的格式。你并非必须采取这种方式，你也可以采用其他的方法解决这个问题。
+说明: 不要使用类的成员 / 全局 / 静态变量来存储状态，你的序列化和反序列化算法应该是无状态的。
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/serialize-and-deserialize-binary-tree
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+迭代版层次遍历实现：
+```
+public:
+
+    // Encodes a tree to a single string.
+    string serialize(TreeNode* root) {
+        if(root==NULL) return "";
+        string res;
+        queue<TreeNode*> node_queue;
+        node_queue.push(root);
+        while(node_queue.size()){
+            TreeNode *cur=node_queue.front();
+            node_queue.pop();
+            if(cur==NULL){
+                res.push_back('#');
+                res.push_back(' ');//注意这里必须也有空格分隔符' '，否则到时读出字符串的时候#和数字会连起来读，造成stoi失败  这里有点疑惑，题解中用的ostringstream并不用分隔符而是把数字和#号直接连起来都能判断成功 难道还有什么区别？
+                continue;
+            }
+            res+=to_string(cur->val); //注意这里不能用('0'+cur->val),也不能用push_back,因为string单个元素是char
+            res.push_back(' ');
+            node_queue.push(cur->left);
+            node_queue.push(cur->right);
+        }
+        return res;
+    }
+
+    // Decodes your encoded data to tree.
+    TreeNode* deserialize(string data) {
+        if(data.empty()) return NULL;
+        istringstream ss(data);
+        queue<TreeNode*> parent_queue;
+        TreeNode* root=new TreeNode(0);
+        string val;
+        ss>>val;
+        root->val=stoi(val);
+        parent_queue.push(root);
+        while(parent_queue.size()){
+            TreeNode *cur=parent_queue.front();   //这里的重点在于 读取字符串-创建头节点并赋值-放入queue-取出父节点-读取字符串-创建左右节点并赋值-放入queue-取出父节点-读取字符串-.... 这个循环的开头一定要理解
+            parent_queue.pop(); 
+            ss>>val;
+            if(val=="#")
+                cur->left=NULL;
+            else{
+                cur->left=new TreeNode(stoi(val));
+                parent_queue.push(cur->left);
+            }
+            ss>>val;
+            if(val=="#")
+                cur->right=NULL;
+            else{
+                cur->right=new TreeNode(stoi(val));
+                parent_queue.push(cur->right);
+            }
+        }
+        return root;
+    }
+};
+```
