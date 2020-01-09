@@ -1,0 +1,182 @@
+> 在 O(n log n) 时间复杂度和常数级空间复杂度下，对链表进行排序。
+示例 1:
+输入: 4->2->1->3
+输出: 1->2->3->4
+示例 2:
+输入: -1->5->3->4->0
+输出: -1->0->3->4->5
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/sort-list
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+【未做出】【值得手撕】
+主要难点在于常数空间复杂度和时间复杂度之间的制约吧
+一开始甚至想交换val hhh
+nlogn的排序算法有堆排序 归并排序和快速排序 
+堆排序虽然显示无需额外的空间，但是实际上只有在完全二叉树能够满足随机访问的情况下才能实现，也就是必须要数组下标 在链表中反而需要一次循环
+然后就是归并排序 归并排序的核心在于把两个序列合成一个序列 数组中需要额外的空间进行合并，但是链表的特性却可以省略这一部分，所以打算实现一下链表的归并排序
+首先我想到的难点在于需要一个保留一个头结点，然后因为无法使用随机下标，所以迭代的归并排序比递归的好
+
+实现的过程中遇到了比较多细节问题，所以打算先参考一下网友题解的实现方法。主要就是分开merge 和 cut 两个函数进行合并和切割
+我一开始比较困惑tail的作用，一开始以为是没用的，但是后来才发现是大大的用处，因为cut切断后，merge创建一个ehead来自成一个链表，后面得串回来，就是利用tail->next串回来的
+注意tail虽然全程看起来只是对自身进行操作，但是链表的next指针特性决定了其当前值，所以并非所看到的的那么简单，一定动手画图了解
+然后merge返回值和cut返回值需要额外注意，merge返回值是一个头结点，需要和tail配合，这里的话其实可以优化返回一个尾节点直接串起来，但是相应地需要循环去找尾节点，其实差不多。cur的返回值是尾节点的下一节点，所以需要提前保存，因为要切断。
+然后就是对空节点的判断，代码中没有针对right为空的情况进行判断，而是主要利用不同位置的while进行间接判断，所以代码的整体性也很重要。
+
+题解实现代码
+```
+class Solution {
+public:
+    ListNode* sortList(ListNode* head) {
+        ListNode *ehead=new ListNode(0);
+        ehead->next=head;
+        int step=1;
+        int len=0;
+        for(ListNode *p=head;p!=NULL;p=p->next)
+            ++len;
+        ListNode *cur=ehead->next,*tail=ehead;;
+        while(step<len){
+            while(cur!=NULL){
+                ListNode *left=cur;
+                cur=cut(left,step);
+                ListNode *right=cur;
+                cur=cut(right,step);
+                tail->next=merge(left,right);
+                while (tail->next!=NULL) {
+                    tail = tail->next;
+                }
+            }
+            cur=ehead->next;
+            tail=ehead;
+            step*=2;
+        }
+        return ehead->next;
+    }
+		
+	ListNode* cut(ListNode *cur,int step){
+        while(--step&&cur)
+            cur=cur->next;
+        if(!cur) return cur;
+        
+        ListNode *temp=cur->next;
+        cur->next=NULL;
+        return temp;
+    }
+    
+    ListNode* merge(ListNode *left,ListNode *right){
+        ListNode *ehead=new ListNode(0);
+        ListNode *cur=ehead;
+        while(left&&right){
+            if(left->val<=right->val){
+                cur->next=left;
+                left=left->next;
+            }else{
+                cur->next=right;
+                right=right->next;
+            }
+            cur=cur->next;         
+        }
+        cur->next=left?left:right;
+        return ehead->next;
+    }
+```
+
+然后来看看详细的网友题解：
+> bottom-to-up 的归并思路是这样的：先两个两个的 merge，完成一趟后，再 4 个4个的 merge，直到结束。举个简单的例子：[4,3,1,7,8,9,2,11,5,6].
+step=1: (3->4)->(1->7)->(8->9)->(2->11)->(5->6)
+step=2: (1->3->4->7)->(2->8->9->11)->(5->6)
+step=4: (1->2->3->4->7->8->9->11)->5->6
+step=8: (1->2->3->4->5->6->7->8->9->11)
+链表里操作最难掌握的应该就是各种断链啊，然后再挂接啊。在这里，我们主要用到链表操作的两个技术：
+merge(l1, l2)，双路归并，我相信这个操作大家已经非常熟练的，就不做介绍了。
+cut(l, n)，可能有些同学没有听说过，它其实就是一种 split 操作，即断链操作。不过我感觉使用 cut 更准确一些，它表示，将链表 l 切掉前 n 个节点，并返回后半部分的链表头。
+额外再补充一个 dummyHead 大法，已经讲过无数次了，仔细体会吧。
+希望同学们能把双路归并和 cut 断链的代码烂记于心，以后看到类似的题目能够刷到手软。
+掌握了这三大神器后，我们的 bottom-to-up 算法伪代码就十分清晰了：
+```
+current = dummy.next;
+tail = dummy;
+for (step = 1; step < length; step *= 2) {
+	while (current) {
+		// left->@->@->@->@->@->@->null
+		left = current;
+
+		// left->@->@->null   right->@->@->@->@->null
+		right = cut(current, step); // 将 current 切掉前 step 个头切下来。
+
+		// left->@->@->null   right->@->@->null   current->@->@->null
+		current = cut(right, step); // 将 right 切掉前 step 个头切下来。
+		
+		// dummy.next -> @->@->@->@->null，最后一个节点是 tail，始终记录
+		//                        ^
+		//                        tail
+		tail.next = merge(left, right);
+		while (tail->next) tail = tail->next; // 保持 tail 为尾部
+	}
+}
+```
+> 下面是比较正式的代码。
+```
+class Solution {
+public:
+    ListNode* sortList(ListNode* head) {
+        ListNode dummyHead(0);
+        dummyHead.next = head;
+        auto p = head;
+        int length = 0;
+        while (p) {
+            ++length;
+            p = p->next;
+        }
+        
+        for (int size = 1; size < length; size <<= 1) {
+            auto cur = dummyHead.next;
+            auto tail = &dummyHead;
+            
+            while (cur) {
+                auto left = cur;
+                auto right = cut(left, size); // left->@->@ right->@->@->@...
+                cur = cut(right, size); // left->@->@ right->@->@  cur->@->...
+                
+                tail->next = merge(left, right);
+                while (tail->next) {
+                    tail = tail->next;
+                }
+            }
+        }
+        return dummyHead.next;
+    }
+    
+    ListNode* cut(ListNode* head, int n) {
+        auto p = head;
+        while (--n && p) {
+            p = p->next;
+        }
+        
+        if (!p) return nullptr;
+        
+        auto next = p->next;
+        p->next = nullptr;
+        return next;
+    }
+    
+    ListNode* merge(ListNode* l1, ListNode* l2) {
+        ListNode dummyHead(0);
+        auto p = &dummyHead;
+        while (l1 && l2) {
+            if (l1->val < l2->val) {
+                p->next = l1;
+                p = l1;
+                l1 = l1->next;       
+            } else {
+                p->next = l2;
+                p = l2;
+                l2 = l2->next;
+            }
+        }
+        p->next = l1 ? l1 : l2;
+        return dummyHead.next;
+    }
+};
+```
+
