@@ -1,0 +1,67 @@
+> 给定一个完美二叉树，其所有叶子节点都在同一层，每个父节点都有两个子节点。二叉树定义如下：
+struct Node {
+  int val;
+  Node *left;
+  Node *right;
+  Node *next;
+}
+填充它的每个 next 指针，让这个指针指向其下一个右侧节点。如果找不到下一个右侧节点，则将 next 指针设置为 NULL。
+初始状态下，所有 next 指针都被设置为 NULL。
+示例：
+
+迭代版实现：
+这个也是不符合常数级的空间复杂度要求
+```
+class Solution {
+public:
+    Node* connect(Node* root) {
+        if(root==NULL) return NULL;
+        queue<Node*> node_queue;
+        node_queue.push(root);
+        while(node_queue.size()){
+            int len=node_queue.size();
+            Node *cur;
+            for(int i=0;i<len;++i){
+                cur=node_queue.front(),node_queue.pop();
+                if(i+1==len) //注意需要判断每一层的最后一个节点
+                    cur->next=NULL;
+                else
+                    cur->next=node_queue.front();                    
+                if(cur->left)
+                    node_queue.push(cur->left);
+                if(cur->right)
+                    node_queue.push(cur->right);
+            }
+        }
+        return root;
+    }
+};
+```
+
+迭代版常数空间实现：
+```
+    Node* connect(Node* root){
+        if(root==NULL)
+            return NULL;
+        if(root->left==NULL) 
+            return root;
+        else{
+            root->left->next=root->right;
+        }
+        Node *cur=root->left->left;
+        Node *pre=root->left;
+        while(cur!=NULL){
+            while(pre!=NULL){
+                pre->left->next=pre->right;
+                if(pre->next!=NULL)
+                    pre->right->next=pre->next->left;
+                else
+                    pre->right->next=NULL;
+                pre=pre->next;
+            }
+            pre=cur;
+            cur=cur->left;
+        }
+        return root;
+    }
+```
