@@ -25,7 +25,34 @@ struct Node {
 因为前一题我用了通用性较高的方法，所以这一题居然直接完成了hhh，然后优雅的用法是没法用了，但是我的方法事件复杂度比较高（603ms还击败50%什么鬼），还是老老实实看一下题解吧
 同样地我的解法的问题在于不是常量的空间复杂度
 
+迭代常数空间复杂度实现：
+主要就是使用一个虚拟头节点不断把父节点的子节点连接起来，然后再把虚拟头节点的next变为下一层的第一个父节点。
+```
+class Solution {
+public:
+    Node* connect(Node* root) {
+        if(root==NULL) return NULL;   
+        Node *pre=root;
+        while(pre!=NULL){
+            Node *ehead=new Node();
+            Node *cur=ehead;
+            while(pre!=NULL){
+            if(pre->left)
+                cur->next=pre->left,cur=cur->next;
+            if(pre->right)
+                cur->next=pre->right,cur=cur->next;
+            pre=pre->next;
+            }
+            pre=ehead->next;
+        }
+        return root;        
+    }
+};
+```
+
 然后来看网友题解：
+
+01/11备注：后来看这个解法的可读性比较差，不如后一个
 > 队列是为了维护先后关系
 但是先后关系本来就存在了next里
 所以可以不使用队列
