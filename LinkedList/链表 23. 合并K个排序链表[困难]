@@ -1,0 +1,232 @@
+> 合并 k 个排序链表，返回合并后的排序链表。请分析和描述算法的复杂度。
+示例:
+输入:
+[
+  1->4->5,
+  1->3->4,
+  2->6
+]
+输出: 1->1->2->3->4->4->5->6
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/merge-k-sorted-lists
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+/*
+之前是两两合并，时间复杂度是O(n+m)，现在的话如果迭代使用两两合并的话，时间复杂度就要提升一个等级了O(k*(n+m))
+然后如果每次都搜索所有的list并取最小值的话 时间复杂度就是k*n了
+
+然后复现一下官方代码
+1.分治法 在我的逐一对比的基础上复现为两两对比（也就是类似于归并排序）
+2.暴力法我就不实现了hhh，太暴力了吧
+3.优先队列的做法说实话有点trick，相当于利用了优先队列的内置sort
+
+然后实现优先队列的遇到的点很值得拿出来说说
+1.for范围语句中必须判断i是否为null，否则会强行解引用null出错
+2.最重要的就是priority的比较行为定义了
+和sort等泛型函数不同，compare传入的不是简单的函数类型，而是一个函数对象！并且函数对象中重载了调用运算符
+priority_queue<class Type,class Container,class Compare>  （当然其自身有`great<T>`和`less<T>`两个定义，默认less）
+    struct compare
+    {
+        bool operator()(ListNode* node1,ListNode* node2)
+        {
+            return node1->val>=node2->val;
+        }
+    };
+    
+   而且注意大于小于的返回判断，如果使用 <=，返回的反而是大顶堆。。。
+	 
+	 实现代码
+```
+class Solution {
+public:
+    ListNode* mergeKLists(vector<ListNode*>& lists){
+
+        priority_queue<ListNode*,vector<ListNode*>,cmp> list_queue;
+        for(auto i:lists)
+            if(i)
+                list_queue.push(i);
+        ListNode* head=new ListNode(0);
+        ListNode* cur=head;
+        while(list_queue.size()){
+            cur->next=list_queue.top();
+            list_queue.pop();
+            cur=cur->next;
+            if(cur->next)
+                list_queue.push(cur->next);
+        }
+        return head->next;
+    }
+    
+    struct cmp
+    {
+        bool operator()(ListNode* node1,ListNode* node2)
+        {
+            return node1->val>=node2->val;
+        }
+    };
+
+
+    /*
+    //分治法（类似归并排序）
+    ListNode* mergeKLists(vector<ListNode*>& lists) {
+        int len=lists.size();
+        if(len==0) return NULL;
+        int i=len-1;
+        ListNode* head=new ListNode(0);
+        while(i){    
+            for(int beg=0,end=i;beg<end;++beg,--end){
+                SortList(head,lists[beg],lists[end]);
+                lists[beg]=head->next;
+            }
+            i=i/2;    
+        }
+        return lists[0];
+    }
+    
+    
+    void SortList(ListNode* head,ListNode* list1,ListNode* list2){
+        ListNode* cur=head;
+        while(list1!=NULL&&list2!=NULL){
+            if(list1->val<=list2->val)
+                cur->next=list1,list1=list1->next;
+            else
+                cur->next=list2,list2=list2->next;
+            cur=cur->next;
+        }
+        cur->next=list1?list1:list2;
+    }
+    
+    // 逐一比较法
+    ListNode* mergeKLists(vector<ListNode*>& lists) {
+        ListNode* head=new ListNode(0);
+        int len=lists.size();
+        if(len==0) return head->next;
+        ListNode* cur;
+        head->next=lists[0];
+        for(int i=1;i<len;++i)
+            SortList(head,head->next,lists[i]);
+        return head->next;
+    }
+    */
+};
+```
+
+方法 1：暴力
+想法 & 算法
+遍历所有链表，将所有节点的值放到一个数组中。
+将这个数组排序，然后遍历所有元素得到正确顺序的值。
+用遍历得到的值，创建一个新的有序链表。
+```
+class Solution(object):
+    def mergeKLists(self, lists):
+        """
+        :type lists: List[ListNode]
+        :rtype: ListNode
+        """
+        self.nodes = []
+        head = point = ListNode(0)
+        for l in lists:
+            while l:
+                self.nodes.append(l.val)
+                l = l.next
+        for x in sorted(self.nodes):
+            point.next = ListNode(x)
+            point = point.next
+        return head.next
+```
+复杂度分析
+时间复杂度：O(NlogN) ，其中 N 是节点的总数目。
+遍历所有的值需花费 O(N) 的时间。
+一个稳定的排序算法花费 O(NlogN) 的时间。
+遍历同时创建新的有序链表花费 O(N) 的时间。
+空间复杂度：O(N) 。
+排序花费 O(N) 空间（这取决于你选择的算法）。
+创建一个新的链表花费O(N) 的空间。
+
+方法 2：逐一比较
+算法
+比较 k 个节点（每个链表的首节点），获得最小值的节点。
+将选中的节点接在最终有序链表的后面。
+复杂度分析
+时间复杂度： O(kN) ，其中 \text{k}k 是链表的数目。
+几乎最终有序链表中每个节点的时间开销都为 O(k) （k-1 次比较）。
+总共有 N 个节点在最后的链表中。
+空间复杂度：
+O(n) 。创建一个新的链表空间开销为 O(n) 。
+O(1) 。重复利用原来的链表节点，每次选择节点时将它直接接在最后返回的链表后面，而不是创建一个新的节点。
+方法 3：用优先队列优化方法 2
+算法
+几乎与上述方法一样，除了将 比较环节 用 优先队列 进行了优化。
+```
+from Queue import PriorityQueue
+
+class Solution(object):
+    def mergeKLists(self, lists):
+        """
+        :type lists: List[ListNode]
+        :rtype: ListNode
+        """
+        head = point = ListNode(0)
+        q = PriorityQueue()
+        for l in lists:
+            if l:
+                q.put((l.val, l))
+        while not q.empty():
+            val, node = q.get()
+            point.next = ListNode(val)
+            point = point.next
+            node = node.next
+            if node:
+                q.put((node.val, node))
+        return head.next
+```
+复杂度分析
+时间复杂度：O(Nlogk) ，其中 k 是链表的数目。
+弹出操作时，比较操作的代价会被优化到 O(logk) 。同时，找到最小值节点的时间开销仅仅为O(1)。
+最后的链表中总共有 N 个节点。
+空间复杂度：
+O(n) 。创造一个新的链表需要 O(n) 的开销。
+O(k) 。以上代码采用了重复利用原有节点，所以只要 O(1) 的空间。同时优先队列（通常用堆实现）需要 O(k) 的空间（远比大多数情况的N要小）。
+
+方法 4：逐一两两合并链表
+算法
+将合并k 个链表的问题转化成合并 2 个链表 k-1 次。这里是 合并两个有序链表 的题目。
+复杂度分析
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1579398348227.png)
+
+方法 5：分治
+想法 & 算法
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1579398405621.png)
+```
+class Solution(object):
+    def mergeKLists(self, lists):
+        """
+        :type lists: List[ListNode]
+        :rtype: ListNode
+        """
+        amount = len(lists)
+        interval = 1
+        while interval < amount:
+            for i in range(0, amount - interval, interval * 2):
+                lists[i] = self.merge2Lists(lists[i], lists[i + interval])
+            interval *= 2
+        return lists[0] if amount > 0 else lists
+
+    def merge2Lists(self, l1, l2):
+        head = point = ListNode(0)
+        while l1 and l2:
+            if l1.val <= l2.val:
+                point.next = l1
+                l1 = l1.next
+            else:
+                point.next = l2
+                l2 = l1
+                l1 = point.next.next
+            point = point.next
+        if not l1:
+            point.next=l2
+        else:
+            point.next=l1
+        return head.next
+```
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1579398425599.png)
