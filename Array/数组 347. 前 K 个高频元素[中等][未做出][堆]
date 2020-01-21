@@ -1,0 +1,292 @@
+> 给定一个非空的整数数组，返回其中出现频率前 k 高的元素。
+示例 1:
+输入: nums = [1,1,1,2,2,3], k = 2
+输出: [1,2]
+示例 2:
+输入: nums = [1], k = 1
+输出: [1]
+说明：
+你可以假设给定的 k 总是合理的，且 1 ≤ k ≤ 数组中不相同的元素的个数。
+你的算法的时间复杂度必须优于 O(nlogn) , n 是数组的大小。
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/top-k-frequent-elements
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+这道题是我从面经题里面选出来的，已经提前知道使用堆排序或者快速排序的了。
+
+看了题解发现是hashmap+最小堆 然后注意C++的优先队列priority_queue已经默认实现了大顶堆，改为great实现小顶堆
+但是我想实现以下暴力法的排序是怎么做到的。。。\
+暴力法的实现：
+1.主要是想验证哈希表向vector的转化，之前我已经是写错了vector的模板类型，vector<pair<int,int>> freqvec(freqmap.begin(),freqmap.end());
+2.快速排序中如何利用pair的second进行排序
+
+然后就是小顶堆的实现，题解中将hashmap得到的pair反转再存入priority还是挺有趣的
+实现过程中发现了个问题 如果用小顶堆的priority queue的话最后输出的结果反而频率最高的排在后面的
+然后在判断长度的时候不小心把push和pop的顺序搞反了，应该先push超出长度，再pop修正长度
+
+我在做题的过程中发现了一个很严重的认知错误
+就是堆内部并非是有序的！！！！（大顶）堆仅仅保证每个结点的值都大于或等于其左右孩子结点的值！！！不能保证最后一个节点就是最小值！！！
+我在复现的过程中使用了大顶堆，却错误地希望headadjust(freqheap,0,k-1);   k-1来去掉最后一个数来维持数组大小
+其实只能通过小顶堆来去除最小值！！！
+
+最后还是没法通过，还不清楚具体原因，似乎是因为我强行在头部插入再重新构建堆，而大话数据结构中是构建堆再不断地把头节点和尾节点互换（而不是新增节点）
+
+所以必须使用STL源码剖析那种从叶节点到头节点的heap调整方法。。。。
+
+题解实现：
+```
+    //priority_queue实现
+     vector<int> topKFrequent(vector<int>& nums, int k){
+        unordered_map<int,int> freqmap;
+        for(auto i:nums)
+            if(freqmap.count(i))
+                ++freqmap[i];
+            else
+                freqmap[i]=1;
+         priority_queue<pair<int,int>,vector<pair<int,int>>,greater<pair<int,int>>> freqque;
+         for(auto i:freqmap)
+             if(freqque.size()==k){
+                 freqque.push({i.second,i.first});
+                 freqque.pop();     
+             }else
+                 freqque.push({i.second,i.first});
+         vector<int> res;
+         while(k){
+             res.push_back(freqque.top().second);
+             freqque.pop();
+             --k;
+         }
+         reverse(res.begin(),res.end());
+         return res;
+     }   
+```
+```
+//暴力排序法
+    vector<int> topKFrequent(vector<int>& nums, int k) {
+        unordered_map<int,int> freqmap;
+        for(auto i:nums)
+            if(freqmap.count(i))
+                ++freqmap[i];
+            else
+                freqmap[i]=1;
+        vector<pair<int,int>> freqvec(freqmap.begin(),freqmap.end());
+        quicksort(freqvec,0,freqvec.size()-1);
+        vector<int>res;
+        for(int i=0;i<k;++i)
+            res.push_back(freqvec[i].first);
+        return res;
+    }
+    
+    void quicksort(vector<pair<int,int>> &vi,int beg,int end){
+        if(beg<end){
+            int mid=partition(vi,beg,end);
+            quicksort(vi,beg,mid-1);
+            quicksort(vi,mid+1,end);
+        }
+    }
+    
+    int partition(vector<pair<int,int>> &vi,int low,int high){
+        int pivotkey=vi[low].second;
+        while(low<high){
+            while(low<high&&pivotkey>=vi[high].second)
+                --high;
+            swap(vi[low],vi[high]);
+            while(low<high&&vi[low].second>=pivotkey)
+                ++low;
+            swap(vi[low],vi[high]);
+        }
+        return low;
+    }
+```
+
+下面是我打算自己实现一个大顶堆，但是失败了hhh
+```
+//错误代码
+     vector<int> topKFrequent(vector<int>& nums, int k){
+        unordered_map<int,int> freqmap;
+        for(auto i:nums)
+            if(freqmap.count(i))
+                ++freqmap[i];
+            else
+                freqmap[i]=1;
+         deque<pair<int,int>> freqheap;
+         for(auto i:freqmap){
+             if(freqheap.size()==k){
+                 if(i.second<freqheap.front().first)
+                     continue;
+                 else
+                     freqheap.front()=i;
+             }else
+                freqheap.push_front({i.second,i.first});
+             headadjust(freqheap,0,freqheap.size());         
+         }
+         vector<int> res;
+         for(int i=k-1;i>=0;--i)
+             res.push_back(freqheap[i].second);
+         return res;
+     }
+    
+    void headadjust(deque<pair<int,int>> &freqheap,int s,int len){
+        auto temp=freqheap[s];
+        for(int i=2*s+1;i<len;i=i*2+1){
+            if(i<len-1&&freqheap[i+1].first<freqheap[i].first)
+                i=i+1;
+            if(temp.first<freqheap[i].first)
+                break;
+            freqheap[s]=freqheap[i];
+            s=i;
+        }
+        freqheap[s]=temp;
+    }
+```
+
+网友题解：
+> 解法一：粗暴排序法
+最简单粗暴的思路就是 使用排序算法对元素按照频率由高到低进行排序，然后再取前 k 个元素。
+以下十种排序算法
+
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1579569348173.png)
+> 可以发现，使用常规的诸如 冒泡、选择、甚至快速排序都是不满足题目要求，它们的时间复杂度都是大于或者等于 O(nlog⁡n)，而题目要求算法的时间复杂度必须优于 O(nlogn)。
+复杂度分析
+时间复杂度：O(nlogn)，n 表示数组长度。首先，遍历一遍数组统计元素的频率，这一系列操作的时间复杂度是 O(n)；接着，排序算法时间复杂度为 O(nlogn)；因此整体时间复杂度为 O(nlogn)。
+空间复杂度：O(n)，最极端的情况下（每个元素都不同），用于存储元素及其频率的 Map 需要存储 n 个键值对。
+
+> 解法二：最小堆
+题目最终需要返回的是前 k个频率最大的元素，可以想到借助堆这种数据结构，对于 k 频率之后的元素不用再去处理，进一步优化时间复杂度。
+具体操作为：
+借助 哈希表 来建立数字和其出现次数的映射，遍历一遍数组统计元素的频率
+维护一个元素数目为 k 的最小堆
+每次都将新的元素与堆顶元素（堆中频率最小的元素）进行比较
+如果新的元素的频率比堆顶端的元素大，则弹出堆顶端的元素，将新的元素添加进堆中
+最终，堆中的 k 个元素即为前 k 个高频元素
+
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1579569394711.png)
+```
+class Solution {
+    public List<Integer> topKFrequent(int[] nums, int k) {
+        // 使用字典，统计每个元素出现的次数，元素为键，元素出现的次数为值
+        HashMap<Integer,Integer> map = new HashMap();
+        for(int num : nums){
+            if (map.containsKey(num)) {
+               map.put(num, map.get(num) + 1);
+             } else {
+                map.put(num, 1);
+             }
+        }
+        // 遍历map，用最小堆保存频率最大的k个元素
+        PriorityQueue<Integer> pq = new PriorityQueue<>(new Comparator<Integer>() {
+            @Override
+            public int compare(Integer a, Integer b) {
+                return map.get(a) - map.get(b);
+            }
+        });
+        for (Integer key : map.keySet()) {
+            if (pq.size() < k) {
+                pq.add(key);
+            } else if (map.get(key) > map.get(pq.peek())) {
+                pq.remove();
+                pq.add(key);
+            }
+        }
+        // 取出最小堆中的元素
+        List<Integer> res = new ArrayList<>();
+        while (!pq.isEmpty()) {
+            res.add(pq.remove());
+        }
+        return res;
+    }
+}
+```
+> 复杂度分析
+时间复杂度：O(nlogk)，n 表示数组的长度。首先，遍历一遍数组统计元素的频率，这一系列操作的时间复杂度是 O(n)；接着，遍历用于存储元素频率的 map，如果元素的频率大于最小堆中顶部的元素，则将顶部的元素删除并将该元素加入堆中，这里维护堆的数目是 k，所以这一系列操作的时间复杂度是O(nlogk) 的；因此，总的时间复杂度是 O(nlog⁡k)。
+空间复杂度：O(n)，最坏情况下（每个元素都不同），map 需要存储 n 个键值对，优先队列需要存储 k 个元素，因此，空间复杂度是 O(n)。
+
+> 解法三：桶排序法
+首先依旧使用哈希表统计频率，统计完成后，创建一个数组，将频率作为数组下标，对于出现频率不同的数字集合，存入对应的数组下标即可。
+
+![](file://C:/Users/lab509/Documents/Gridea/post-images/1579569614556.png)
+```
+//基于桶排序求解「前 K 个高频元素」
+class Solution {
+    public List<Integer> topKFrequent(int[] nums, int k) {
+        List<Integer> res = new ArrayList();
+        // 使用字典，统计每个元素出现的次数，元素为键，元素出现的次数为值
+        HashMap<Integer,Integer> map = new HashMap();
+        for(int num : nums){
+            if (map.containsKey(num)) {
+               map.put(num, map.get(num) + 1);
+             } else {
+                map.put(num, 1);
+             }
+        }
+        
+        //桶排序
+        //将频率作为数组下标，对于出现频率不同的数字集合，存入对应的数组下标
+        List<Integer>[] list = new List[nums.length+1];
+        for(int key : map.keySet()){
+            // 获取出现的次数作为下标
+            int i = map.get(key);
+            if(list[i] == null){
+               list[i] = new ArrayList();
+            } 
+            list[i].add(key);
+        }
+        
+        // 倒序遍历数组获取出现顺序从大到小的排列
+        for(int i = list.length - 1;i >= 0 && res.size() < k;i--){
+            if(list[i] == null) continue;
+            res.addAll(list[i]);
+        }
+        return res;
+    }
+}
+```
+> 复杂度分析
+时间复杂度：O(n)，nn 表示数组的长度。首先，遍历一遍数组统计元素的频率，这一系列操作的时间复杂度是 O(n)；桶的数量为 n+1，所以桶排序的时间复杂度为 O(n)；因此，总的时间复杂度是 O(n)。
+空间复杂度：很明显为 O(n)
+
+> 官方题解：
+方法 1：堆
+想法
+k = 1 时问题很简单，线性时间内就可以解决。只需要用哈希表维护元素出现频率，每一步更新最高频元素即可。
+当 k > 1 就需要一个能够根据出现频率快速获取元素的数据结构，这就是优先队列。
+首先建立一个元素值对应出现频率的哈希表。在 Java 中使用 HashMap，但需要手工填值。在 Python 中提供一个字典结构用作哈希表和在 collections 库中的 Counter 方法去构建我们需要的哈希表。
+这个步骤需要 O(N) 时间其中 N 是列表中元素个数。
+第二步建立堆，堆中添加一个元素的复杂度是O(log(k))，要进行 N 次复杂度是 O(N)。
+最后一步是输出结果，复杂度为 O(klog(k))。
+在 Python 中可以使用 heapq 库中的 nlargest 方法，可以在相同时间内完成，但只需要一行代码解决。
+```
+class Solution {
+  public List<Integer> topKFrequent(int[] nums, int k) {
+    // build hash map : character and how often it appears
+    HashMap<Integer, Integer> count = new HashMap();
+    for (int n: nums) {
+      count.put(n, count.getOrDefault(n, 0) + 1);
+    }
+
+    // init heap 'the less frequent element first'
+    PriorityQueue<Integer> heap =
+            new PriorityQueue<Integer>((n1, n2) -> count.get(n1) - count.get(n2));
+
+    // keep k top frequent elements in the heap
+    for (int n: count.keySet()) {
+      heap.add(n);
+      if (heap.size() > k)
+        heap.poll();
+    }
+
+    // build output list
+    List<Integer> top_k = new LinkedList();
+    while (!heap.isEmpty())
+      top_k.add(heap.poll());
+    Collections.reverse(top_k);
+    return top_k;
+  }
+}
+```
+> 复杂度分析
+时间复杂度：O(Nlog(k))。Counter 方法的复杂度是 O(N)，建堆和输出的复杂度是 O(Nlog(k))。因此总复杂度为O(N+Nlog(k))=O(Nlog(k))。
+空间复杂度：O(N)，存储哈希表的开销。
+注释
+根据复杂度分析，方法对于小 k 的情况是很优的。但是如果 k 值很大，我们可以将算法改成删除频率最低的若干个元素。
+
