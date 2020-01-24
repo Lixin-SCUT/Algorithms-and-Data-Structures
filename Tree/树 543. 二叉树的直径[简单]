@@ -1,0 +1,78 @@
+> 给定一棵二叉树，你需要计算它的直径长度。一棵二叉树的直径长度是任意两个结点路径长度中的最大值。这条路径可能穿过根结点。
+示例 :
+给定二叉树
+         1
+         / \
+        2   3
+       / \     
+      4   5    
+返回 3, 它的长度是路径 [4,2,1,3] 或者 [5,2,1,3]。
+注意：两结点之间的路径长度是以它们之间边的数目表示。
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/problems/diameter-of-binary-tree
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
+
+这个问题可以转化为找某个节点的左右子树的深度之和（注意不一定就是根节点，有可能没有左右子树之一）
+递归倒是很简单，直接从叶子节点的1开始算起，每个非叶节点就计算左子树和右子树之和，再取两者的较大者+1返回
+迭代比较难，我想到的是先存入父节点、右子树和左子树，但是不知道怎么把层数回传给父节点
+后来想到用map来存,还是没法从叶节点开始回溯啊。。。
+
+```
+class Solution {
+public:        
+    // 递归版
+    int diameterOfBinaryTree(TreeNode* root) {
+        if(root==NULL) return 0;
+        int max_res=0;
+        tree_deep(root,max_res);
+        return max_res;
+    }
+    
+    int tree_deep(TreeNode *cur,int &max_res){
+        int deep=0;
+        if(cur->left==NULL&&cur->right==NULL)
+            return 1;
+        int left_deep,right_deep;
+        if(cur->left)
+            left_deep=tree_deep(cur->left,max_res);
+        else
+            left_deep=0;
+        if(cur->right)
+            right_deep=tree_deep(cur->right,max_res);
+        else
+            right_deep=0;
+        max_res=max_res>left_deep+right_deep?max_res:left_deep+right_deep;
+        return left_deep>right_deep?left_deep+1:right_deep+1;
+    }
+};
+```
+
+官方题解：
+> 方法 1：深度优先搜索
+想法
+任意一条路径可以被写成两个 箭头（不同方向），每个箭头代表一条从某些点向下遍历到孩子节点的路径。
+假设我们知道对于每个节点最长箭头距离分别为 L, R，那么最优路径经过 L + R + 1 个节点。
+算法
+按照常用方法计算一个节点的深度：max(depth of node.left, depth of node.right) + 1。在计算的同时，经过这个节点的路径长度为 1 + (depth of node.left) + (depth of node.right) 。搜索每个节点并记录这些路径经过的点数最大值，期望长度是结果 - 1。
+
+```
+java
+class Solution {
+    int ans;
+    public int diameterOfBinaryTree(TreeNode root) {
+        ans = 1;
+        depth(root);
+        return ans - 1;
+    }
+    public int depth(TreeNode node) {
+        if (node == null) return 0;
+        int L = depth(node.left);
+        int R = depth(node.right);
+        ans = Math.max(ans, L+R+1);
+        return Math.max(L, R) + 1;
+    }
+}
+```
+复杂度分析
+时间复杂度：O(N)，每个节点只访问一次。
+空间复杂度：O(N)，深度优先搜索的栈开销。
