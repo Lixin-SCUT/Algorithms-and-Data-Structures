@@ -1,0 +1,146 @@
+> 题目描述
+在一个长度为n的数组里的所有数字都在0到n-1的范围内。 数组中某些数字是重复的，但不知道有几个数字是重复的。也不知道每个数字重复几次。请找出数组中任意一个重复的数字。 例如，如果输入长度为7的数组{2,3,1,0,2,5,3}，那么对应的输出是第一个重复的数字2。
+
+因为数组的条件比较苛刻，所以其实有很多巧妙的解法，不修改原数组的方法是对数字的范围进行二分法，修改原数组的方法是利用数组下表一一对应的方法，上述两者都需要额外的空间，如果有额外的空间的话可以很方便地利用hashset解决问题
+
+```
+class Solution {
+public:
+    // Parameters:
+    //        numbers:     an array of integers
+    //        length:      the length of array numbers
+    //        duplication: (Output) the duplicated number in the array number
+    // Return value:       true if the input is valid, and there are some duplications in the array number
+    //                     otherwise false
+    //不修改原数组的方法
+    bool duplicate(int numbers[], int length, int* duplication){
+        if(length==0) return -1;
+        int left=0,right=length-1;
+        while(left<right){
+            int mid=left+(right-left)/2;
+            int count=0;
+            for(int i=0;i<length;++i)
+                if(numbers[i]>=left&&numbers[i]<=mid)
+                    ++count;
+            if(count>mid-left+1)
+                right=mid;
+            else
+                left=mid+1;
+        }
+        if(left==right)
+            return left;
+        return -1;
+    }
+    
+    /*
+    //修改原数组的方法
+    bool duplicate(int numbers[], int length, int* duplication){
+        for(int i=0;i<length;++i){
+            while(i!=numbers[i]){
+                if(numbers[i]==numbers[numbers[i]])
+                    return true;
+                swap(numbers[i],numbers[numbers[i]]);
+            }
+        }
+        return false;
+    }
+    
+    //hashset方法
+    bool duplicate(int numbers[], int length, int* duplication) {
+        unordered_set<int> num_set;
+        for(int i=0;i<length;++i){
+            if(num_set.count(numbers[i]))
+                return true;
+            num_set.insert(numbers[i]);
+        }
+        return false;
+    }
+    */
+};
+```
+
+书本题解：
+> 解决这个问题的一个简单的方法是先把输入的数组排序。从排序的数组中找出重复的数字只需要从头到尾扫描排序后的数组。排序一个长度为n的数组需要O(nlogn)的时间。
+还可以利用哈希表来解决这个问题。从头到尾按顺序扫描数组的每个 数字，每扫描到一个数字的时候，都可以用0(1)的时间来判断哈希表里是否已经包含了该数字。如果哈希表里还没有这个数字，就把它加入哈希表。 如果哈希表里已经存在该数字，就找到一个重复的数字。这个算法的时间 复杂度是O(n)，但它提高时间效率是以一个大小为O(n)的哈希表为代价的。 
+空间复杂度是0(1)的算法：我们注意到数组中的数字都在0〜n-1的范围内。如果这个数组中没有 重复的数字，那么当数组排序之后数字i将出现在下标为i的位置。由于数组中有重复的数字，有些位置可能存在多个数字，同时有些位置可能没有数字。
+现在让我们重排这个数组。从头到尾依次扫描这个数组中的每个数字。 当扫描到下标为i的数字时，首先比较这个数字(用〃，表示)是不是等于i. 如果是，则接着扫描下一个数字；如果不是，则再拿它和第加个数字进行 比较。如果它和第彻个数字相等，就找到了一个重复的数字(该数字在下 标为，和m的位置都出现了)；如果它和第m个数字不相等，就把第i个数字和第m个数字交换，把m放到属于它的位置。接下来再重复这个比较、 交换的过程，直到我们发现一个重复的数字。
+```
+bool duplicate(int numbers[], int length, int* duplication)
+{
+    if(numbers == nullptr || length <= 0)
+        return false;
+
+    for(int i = 0; i < length; ++i)
+    {
+        if(numbers[i] < 0 || numbers[i] > length - 1)
+            return false;
+    }
+
+    for(int i = 0; i < length; ++i)
+    {
+        while(numbers[i] != i)
+        {
+            if(numbers[i] == numbers[numbers[i]])
+            {
+                *duplication = numbers[i];
+                return true;
+            }
+
+            // 交换numbers[i]和numbers[numbers[i]]             
+            int temp = numbers[i];
+            numbers[i] = numbers[temp];
+            numbers[temp] = temp;
+        }
+    }
+
+    return false;
+}
+```
+> 代码中尽管有一个两重循环，但每个数字最多只要交换两次就能找到 属于它自己的位置，因此总的时间复杂度是O(n).另外，所有的操作步骤 都是在输入数组上进行的，不需要额外分配内存，因此空间复杂度为O(1)。
+
+> 接下来我们尝试避免使用O(n)的辅助空间并且不修改原数组的方法。为什么数组中会有重复的数字？假如没有重复的数字，那么在从1〜〃的范围里只有"个数字。由于 数组里包含超过n个数字，所以一定包含了重复的数字。看起来在某范围 里数字的个数对解决这个问题很重要。
+我们把从1〜n的数字从中间的数字m分为两部分，前面一半为1〜m， 后面一半为m+1〜n。如果1〜m的数字的数目超过m,那么这一半的区间 里一定包含重复的数字；否则，另一半m+1〜n的区间里一定包含重复的数 字。我们可以继续把包含重复数字的区间一分为二，直到找到一个重复的 数字。这个过程和二分查找算法很类似，只是多了一步统计区间里数字的数目。
+注意是利用某个数字去对比数组中的元素，而不是用数组的元素去对比数字
+```
+int getDuplication(const int* numbers, int length)
+{
+    if(numbers == nullptr || length <= 0)
+        return -1;
+
+    int start = 1;
+    int end = length - 1;
+    while(end >= start)
+    {
+        int middle = ((end - start) >> 1) + start;
+        int count = countRange(numbers, length, start, middle);
+        if(end == start)
+        {
+            if(count > 1)
+                return start;
+            else
+                break;
+        }
+
+        if(count > (middle - start + 1))
+            end = middle;
+        else
+            start = middle + 1;
+    }
+    return -1;
+}
+
+int countRange(const int* numbers, int length, int start, int end)
+{
+    if(numbers == nullptr)
+        return 0;
+
+    int count = 0;
+    for(int i = 0; i < length; i++)
+        if(numbers[i] >= start && numbers[i] <= end)
+            ++count;
+    return count;
+}
+```
+
+
+
