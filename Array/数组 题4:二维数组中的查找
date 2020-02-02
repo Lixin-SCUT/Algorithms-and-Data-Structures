@@ -1,0 +1,59 @@
+题目描述
+在一个二维数组中（每个一维数组的长度相同），每一行都按照从左到右递增的顺序排序，每一列都按照从上到下递增的顺序排序。请完成一个函数，输入这样的一个二维数组和一个整数，判断数组中是否含有该整数。
+
+```
+class Solution {
+public:
+    bool Find(int target, vector<vector<int> > array) {
+        if(array.empty())
+               return false;
+        int row,col;
+        row=array.size();
+        col=array[0].size();
+        int cur_row,cur_col;
+        cur_row=0,cur_col=col-1;
+        while(cur_row<row&&cur_col>=0){
+            if(target==array[cur_row][cur_col])
+                return true;
+            if(target<array[cur_row][cur_col])
+                --cur_col;
+            else 
+                ++cur_row;
+        }
+        return false;
+    }
+};
+```
+
+书本题解：
+难题是因为我们在二维数组的中间选取一个数字来和要查找的数字进行比较，这就导致下一次要查找的是两个相互重叠的区域。
+我们发现如下规律：首先选取数组中右上角的数字。如果该数字等于要查找的数字，则查找过程结束；如果该数字大于要查找的数字，则剔除这个数字所在的列；如果该数字小于要查找的数字, 则剔除这个数字所在的行。也就是说，如果要查找的数字不在数组的右上 角，则每一次都在数组的查找范围中剔除一行或者一列，这样每一步都可 以缩小查找的范围，直到找到要查找的数字，或者查找范围为空。
+```
+#include <cstdio>
+
+bool Find(int* matrix, int rows, int columns, int number)
+{
+    bool found = false;
+
+    if(matrix != nullptr && rows > 0 && columns > 0)
+    {
+        int row = 0;
+        int column = columns - 1;
+        while(row < rows && column >=0)
+        {
+            if(matrix[row * columns + column] == number)
+            {
+                found = true;
+                break;
+            }
+            else if(matrix[row * columns + column] > number)
+                -- column;
+            else
+                ++ row;
+        }
+    }
+
+    return found;
+}
+```
+我们每次都选取数组查找范围内的右上角数字。同样，我们也可以选取左下角的数字。感兴趣的读者不妨自己分析一下每次 都选取左下角数字的查找过程。但我们不能选择左上角数字或者右下角数字。
