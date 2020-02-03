@@ -1,0 +1,102 @@
+> 题目描述
+请实现一个函数，将一个字符串中的每个空格替换成“%20”。例如，当字符串为We Are Happy.则经过替换之后的字符串为We%20Are%20Happy。
+
+这道题的难点在于这是个char* ，而不是string，所以不能简单地一次循环把空格直接替换
+否则因为是把一个字符换成三个字符，而char* 的空间是固定的，直接空间就炸裂了
+所以必须先循环一遍，统计空格的数量，再分配新的空间
+为什么返回是void???原来是因为早已安排了额外的空间length...所以不能用sizeof....
+提交之后一直没通过，原来是'\0'这个家伙，所以书中的int cur=new_len;而不是int cur=new_len-1;
+我有个想法，平时可以将char* 中的'\0'类比string的尾后位置，因为它既不会算入size()，又可以有这个位置（str[end]）
+
+```
+class Solution {
+public:
+	void replaceSpace(char *str,int length) {
+        int ori_len=0;//记得size不会统计'\0'
+        int count_space=0;
+        int i=0;
+        while(str[i]!='\0'){
+            ++ori_len;
+            if(str[i]==' ')
+                ++count_space;
+            ++i;
+        }
+        int new_len=ori_len+2*count_space;
+        if(length<=new_len)//注意length参数
+            return;
+        int cur=new_len;
+        int pre=ori_len;//注意！！！这里不可以忽略'\0'这个家伙
+        //重点是从后往前降低时间复杂度，不要从前往后
+        while(pre>=0&&cur>pre) //注意 不是必须去到pre==0，当cur和pre重合就说明没有空格了，可以提前结束
+        {
+            if(str[pre]==' '){
+                str[cur--]='0';
+                str[cur--]='2';
+                str[cur--]='%';
+            }else
+                str[cur--]=str[pre];
+            --pre;
+        }
+	}
+};
+```
+
+书本题解：
+看到这个题目，我们首先应该想到的是原来一个空格字符，替换之后变成，％、2和0这3个字符，因此字符串会变长。如果是在原来的字符串 上进行替换，就有可能覆盖修改在该字符串后面的内存。如果是创建新的字符串并在新的字符串上进行替换，那么我们可以自己分配足够多的内存。 由于有两种不同的解决方案，我们应该向面试官问清楚，让他明确告诉我们他的需求。
+暴力法：
+最直观的做法是从头到尾扫描字符 串，每次碰到空格字符的时候进行替换。由于是把1个字符替换成3个字 符，我们必须要把空格后面所有的字符都后移2字节，否则就有两个字符 被覆盖了。
+假设字符串的长度是如 对每个空格字符，需要移动后面O(n)个字符, 因此对于含有O(n)个空格字符的字符串而言，总的时间效率是O(n^2)
+
+时间复杂度为O(n)的解法:
+先遍历一次字符串，统计出字符串中空格的总数， 并可以由此计算出替换之后的字符串的总长度。
+从字符串的后面开始复制和替换。首先准备两个指针：P1和P2。 P1指向原始字符串的末尾，而P2指向替换之后的字符串的末尾。接下来向前移动指针R1,逐个把它指向的字符复制到P2指向的位置，直到碰到第一个空格为止。
+碰到第一个空格之后， 把P1向前移动1格，在已之前插入字符串"%20"„由于"％20"的长度为3, 同时也要把P2向前移动3格
+当P1和P2指向同一位置，表明所有空格都已经替换完毕。（可以提前终止，不必走完整个字符串）
+从上面的分析中我们可以看出，所有的字符都只复制（移动）一次， 因此这个算法的时间效率是O(n),比第一个思路要快。
+
+```
+/*length 为字符数组str的总容量，大于或等于字符串str的实际长度*/
+void ReplaceBlank(char str[], int length)
+{
+    if(str == nullptr && length <= 0)
+        return;
+
+    /*originalLength 为字符串str的实际长度*/
+    int originalLength = 0;
+    int numberOfBlank = 0;
+    int i = 0;
+    while(str[i] != '\0')
+    {
+        ++ originalLength;
+
+        if(str[i] == ' ')
+            ++ numberOfBlank;
+
+        ++ i;
+    }
+
+    /*newLength 为把空格替换成'%20'之后的长度*/
+    int newLength = originalLength + numberOfBlank * 2;
+    if(newLength > length)
+        return;
+
+    int indexOfOriginal = originalLength;
+    int indexOfNew = newLength;
+    while(indexOfOriginal >= 0 && indexOfNew > indexOfOriginal)
+    {
+        if(str[indexOfOriginal] == ' ')
+        {
+            str[indexOfNew --] = '0';
+            str[indexOfNew --] = '2';
+            str[indexOfNew --] = '%';
+        }
+        else
+        {
+            str[indexOfNew --] = str[indexOfOriginal];
+        }
+
+        -- indexOfOriginal;
+    }
+}
+
+```
