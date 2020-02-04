@@ -1,0 +1,78 @@
+> 题目描述
+输入一个链表，按链表从尾到头的顺序返回一个ArrayList。
+
+```
+class Solution {
+public:
+    vector<int> printListFromTailToHead(ListNode* head) {
+        //【未做出】
+        /*
+        //首先就是可以用栈存储
+        stack<int> node_val;
+        ListNode *cur=head;
+        vector<int> res;
+        while(cur!=NULL){
+            node_val.push(cur->val);
+            cur=cur->next;
+        }
+        while(node_val.size()){
+            res.push_back(node_val.top());
+            node_val.pop();
+        }
+        return res;
+        */
+        //然后通过栈联想到递归（这个思维很重要，不要仅仅限制于递归到栈）
+        vector<int> res;
+        if(head==NULL)
+            return res;
+        add_value(head,res);
+        return res;
+    }
+    
+    void add_value(ListNode* cur,vector<int> &res){
+        if(cur->next!=NULL)
+            add_value(cur->next,res);
+        res.push_back(cur->val);
+    }
+};
+```
+
+书本题解：
+> 解决这个问题肯定是要遍历链表
+遍历的顺序是从头到尾，可输出的顺序却是从尾到头。第一个遍历的节点最后一个输出，而最后一个遍历到的节点第一个输出。这就是典型的“后进先出”，我们可以用栈实现这种顺序。
+```
+void PrintListReversingly_Iteratively(ListNode* pHead)
+{
+    std::stack<ListNode*> nodes;
+
+    ListNode* pNode = pHead;
+    while(pNode != nullptr)
+    {
+        nodes.push(pNode);
+        pNode = pNode->m_pNext;
+    }
+
+    while(!nodes.empty())
+    {
+        pNode = nodes.top();
+        printf("%d\t", pNode->m_nValue);
+        nodes.pop();
+    }
+}
+```
+> 既然想到了用栈来实现这个函数，而递归在本质上就是一个栈结构， 于是很自然地又想到了用递归来实现。要实现反过来输出链表，我们每访 问到一个节点的时候，先递归输出它后面的节点，再输出该节点自身，这 样链表的输出结果就反过来了。
+```
+void PrintListReversingly_Recursively(ListNode* pHead)
+{
+    if(pHead != nullptr)
+    {
+        if (pHead->m_pNext != nullptr)
+        {
+            PrintListReversingly_Recursively(pHead->m_pNext);
+        }
+ 
+        printf("%d\t", pHead->m_nValue);
+    }
+}
+```
+> 上面的基于递归的代码看起来很简洁，但有一个问题：当链表非常长的时候，就会导致函数调用的层级很深，从而有可能导致函数调用栈溢出。显然用栈基于循环实现的代码的鲁棒性要好一点。
