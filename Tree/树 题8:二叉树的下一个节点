@@ -1,0 +1,75 @@
+> 题目描述
+给定一个二叉树和其中的一个结点，请找出中序遍历顺序的下一个结点并且返回。注意，树中的结点不仅包含左右子结点，同时包含指向父结点的指针。
+
+主要是要注意我把两种情况合在一起计算了，一是 目标节点是其父节点的左子节点，二是 目标是其父节点的右子节点。循环的条件很重要，本来我用的是判断当前节点和父节点的关系，但是后来发现要先判断父节点是否为空，就改了，最后的判断也相应地需要修改
+
+```
+class Solution {
+public:
+    TreeLinkNode* GetNext(TreeLinkNode* pNode)
+    {
+        TreeLinkNode *cur;
+        if(pNode->right!=NULL){
+            cur=pNode->right;
+            while(cur->left!=NULL)
+                cur=cur->left;
+            return cur;
+        }
+        cur=pNode;
+        while(cur->next!=NULL)
+            if(cur!=cur->next->left)
+                cur=cur->next;
+            else
+                break;
+        if(cur->next!=NULL)
+            return cur->next;
+        return NULL;
+    }
+};
+```
+
+书本题解：
+> 1.如果一个节点有右了树，那么它的下一个节点就是它的右子树中的最 左子节点。
+2.一个节点没有右子树的情形：
+a.如果节点是它父节点的左子节点，那么它的下一个节点就是它的父节点。
+b.如果一个节点既没有右子树，并且它还是它父节点的右子节点，那么 这种情形就比较复杂。我们可以沿着指向父节点的指针一直向上遍历，直 到找到一个是它父节点的左子节点的节点。如果这样的节点存在，那么这 个节点的父节点就是我们要找的下一个节点。
+
+```
+struct BinaryTreeNode
+{
+    int                    m_nValue;
+    BinaryTreeNode*        m_pLeft;
+    BinaryTreeNode*        m_pRight;
+    BinaryTreeNode*        m_pParent;
+};
+
+BinaryTreeNode* GetNext(BinaryTreeNode* pNode)
+{
+    if(pNode == nullptr)
+        return nullptr;
+
+    BinaryTreeNode* pNext = nullptr;
+    if(pNode->m_pRight != nullptr)
+    {
+        BinaryTreeNode* pRight = pNode->m_pRight;
+        while(pRight->m_pLeft != nullptr)
+            pRight = pRight->m_pLeft;
+
+        pNext = pRight;
+    }
+    else if(pNode->m_pParent != nullptr)
+    {
+        BinaryTreeNode* pCurrent = pNode;
+        BinaryTreeNode* pParent = pNode->m_pParent;
+        while(pParent != nullptr && pCurrent == pParent->m_pRight)
+        {
+            pCurrent = pParent;
+            pParent = pParent->m_pParent;
+        }
+
+        pNext = pParent;
+    }
+
+    return pNext;
+}
+```
