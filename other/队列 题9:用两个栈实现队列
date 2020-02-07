@@ -1,0 +1,90 @@
+> 题目描述
+用两个栈来实现一个队列，完成队列的Push和Pop操作。 队列中的元素为int类型。
+
+```
+class Solution
+{
+public:
+    void push(int node) {
+        stack1.push(node);
+    }
+
+    int pop() {
+        if(stack2.empty()){
+            while(stack1.size()){
+                stack2.push(stack1.top());
+                stack1.pop();
+            }
+        }
+				//补充
+				 if(stack2.empty())
+					 throw new exception("queue is empty");
+					 
+        int res=stack2.top();
+        stack2.pop();
+        return res;
+    }
+
+private:
+    stack<int> stack1;
+    stack<int> stack2;
+};
+```
+
+书本题解：
+> 1插入一个元素,先把它插入stack
+2删除一个元素的步骤：当stack2不为空时，在stack2中的栈顶元素是最先进入队列的元素，可以弹出。当stack2 为空时，我们把stack1中的元素逐个弹出并压入stack2。由于先进入队列的元素被压到stackl的底端，经过弹出和压入操作之后就处于stack2的顶端, 又可以直接弹出。
+```
+template <typename T> class CQueue
+{
+public:
+    CQueue(void);
+    ~CQueue(void);
+    
+    // 在队列末尾添加一个结点
+    void appendTail(const T& node);
+
+    // 删除队列的头结点
+    T deleteHead();
+
+private:
+    stack<T> stack1;
+    stack<T> stack2;
+};
+
+template <typename T> CQueue<T>::CQueue(void)
+{
+}
+
+template <typename T> CQueue<T>::~CQueue(void)
+{
+}
+
+template<typename T> void CQueue<T>::appendTail(const T& element)
+{
+    stack1.push(element);
+} 
+
+template<typename T> T CQueue<T>::deleteHead()
+{
+    if(stack2.size()<= 0)
+    {
+        while(stack1.size()>0)
+        {
+            T& data = stack1.top();
+            stack1.pop();
+            stack2.push(data);
+        }
+    }
+
+    if(stack2.size() == 0)
+        throw new exception("queue is empty");
+
+    T head = stack2.top();
+    stack2.pop();
+
+    return head;
+}
+```
+
+注意我的代码中存在鲁棒性不强的问题，在判断stack2为空之后可能stack1还是可能为空，所以需要再次检查一次stack2是否为空
