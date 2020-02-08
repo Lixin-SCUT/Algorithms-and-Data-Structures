@@ -1,0 +1,93 @@
+> 题目描述
+把一个数组最开始的若干个元素搬到数组的末尾，我们称之为数组的旋转。
+输入一个非递减排序的数组的一个旋转，输出旋转数组的最小元素。
+例如数组{3,4,5,1,2}为{1,2,3,4,5}的一个旋转，该数组的最小值为1。
+NOTE：给出的所有元素都大于0，若数组大小为0，请返回0。
+
+一定要注意right=mid和left=mid，不能用mid+1或者mid-1，因为有可能临界点两个数字在mid那里，然后注意题目那里没说明数字会重复，所以需要判断是否三者相等再相应缩减范围
+
+```
+class Solution {
+public:
+    int minNumberInRotateArray(vector<int> rotateArray) {
+        if(rotateArray.empty())
+            return 0;
+        int left=0;
+        int right=rotateArray.size()-1;
+        while(left<right-1){
+            int mid=left+(right-left)/2;
+            while(rotateArray[mid]==rotateArray[right]&&
+                 rotateArray[mid]==rotateArray[left])
+                ++left,--right;
+            if(rotateArray[left]>rotateArray[mid])
+                right=mid;
+            else if(rotateArray[mid]>rotateArray[right])
+                left=mid;
+            else
+                return rotateArray[left];
+        }
+        return rotateArray[right];
+    }
+};
+```
+
+官方题解：
+> 这道题最直观的解法并不难，从头到尾遍历数组一次，我们就能找出 最小的元素。这种思路的时间复杂度显然是O(n)。但是这种思路没有利用输入的旋转数组的特性
+和二分查找法一样，我们用两个指针分别指向数组的第一个元素和最 后一个元素。按照题目中旋转的规则，第一个元素应该是大于或者等于最 后一个元素的(这其实不完全对，还有特例，后面再加以讨论)。
+如果中间元素位于后面的递增子数组，那么它应该小于或者等 于第二个指针指向的元素。此时该数组中最小的元素应该位于该中间元素 的前面。
+不管是移动第一个指针还是第二个指针，查找范围都会缩小到原来的 一半。接下来我们再用更新之后的两个指针重复做新一轮的查找。
+按照上述思路，第一个指针总是指向前面递增数组的元素，而第二个 指针总是指向后面递增数组的元素。最终第一个指针将指向前面子数组的 最后一个元素，而第二个指针会指向后面子数组的第一个元素。也就是它 们最终会指向两个相邻的元素，而第二个指针指向的刚好是最小的元素。 这就是循环结束的条件。
+最后两个指针的距离是1,表明第一个指针已经指向第一个递增子数组 的末尾，而第二个指针指向第二个递增子数组的开头。第二个子数组的 第一个数字就是最小的数字，因此第二个指针指向的数字就是我们查找 的结果。
+当然需要再仔细分析下标为indexI和index2 （index 1和index2分别与图2.13中 Pi和P2相对应）的两个数相同的情况。当两个指针指向的数字及它们中间的数字三者相同 的时候，我们无法判断中间的数字是位于前面的子数组还是后面的子数组, 也就无法移动两个指针来缩小查找的范围。此时，我们不得不采用顺序查 找的方法。
+
+```
+int Min(int* numbers, int length)
+{
+    if(numbers == nullptr || length <= 0)
+        throw new std::exception("Invalid parameters");
+ 
+    int index1 = 0;
+    int index2 = length - 1;
+    int indexMid = index1;
+    while(numbers[index1] >= numbers[index2])
+    {
+        // 如果index1和index2指向相邻的两个数，
+        // 则index1指向第一个递增子数组的最后一个数字，
+        // index2指向第二个子数组的第一个数字，也就是数组中的最小数字
+        if(index2 - index1 == 1)
+        {
+            indexMid = index2;
+            break;
+        }
+ 
+        // 如果下标为index1、index2和indexMid指向的三个数字相等，
+        // 则只能顺序查找
+        indexMid = (index1 + index2) / 2;
+        if(numbers[index1] == numbers[index2] && numbers[indexMid] == numbers[index1])
+            return MinInOrder(numbers, index1, index2);
+
+        // 缩小查找范围
+        if(numbers[indexMid] >= numbers[index1])
+            index1 = indexMid;
+        else if(numbers[indexMid] <= numbers[index2])
+            index2 = indexMid;
+    }
+ 
+    return numbers[indexMid];
+}
+
+int MinInOrder(int* numbers, int index1, int index2)
+{
+    int result = numbers[index1];
+    for(int i = index1 + 1; i <= index2; ++i)
+    {
+        if(result > numbers[i])
+            result = numbers[i];
+    }
+
+    return result;
+}
+```
+
+注意如果第一个就是最小数字的话不如进入while循环
+然后两指针相同的情况是leetcode处理得更好
