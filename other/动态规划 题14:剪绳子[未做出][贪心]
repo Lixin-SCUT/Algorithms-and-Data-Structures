@@ -1,0 +1,120 @@
+> 题目描述
+给你一根长度为n的绳子，请把绳子剪成整数长的m段（m、n都是整数，n>1并且m>1），每段绳子的长度记为k[0],k[1],...,k[m]。请问k[0]xk[1]x...xk[m]可能的最大乘积是多少？例如，当绳子的长度是8时，我们把它剪成长度分别为2、3、3的三段，此时得到的最大乘积是18。
+
+我一开始用的是贪心法，就是单纯地不断取3
+但是这是有问题的，因为如果最后剩余的是4的话，应该取2x2而不是3x1
+然后动态规划就是要注意特殊例子，因为动态规划把两边都是为一个整体，但是题目要求必须剪一刀，比如3取1和2的时候，2在动态规划数组中是1，就会导致结果等于1
+```
+class Solution {
+public:
+    int cutRope(int number) {
+        //动态规划；
+        if(number<2)
+            return 0;
+        //注意着两个特殊例子无法去除，因为动态规划中这两个特殊例子应视为一个整体
+        if(number==2)
+            return 1;
+        if(number==3)
+            return 2;
+        vector<int> count(number+1,0);
+        count[1]=1;
+        count[2]=2;
+        count[3]=3;
+        for(int i=4;i<number+1;++i)
+            for(int j=1;j<=i/2;++j)
+                count[i]=max(count[i],count[j]*count[i-j]);
+        return count.back();
+        /*
+        //贪心算法
+        if(number<1)
+            return 0;
+        if(number==2)
+            return 1;
+        if(number==3)
+            return 2;
+        
+        //注意可以直接*4，但是可读性有点差
+        if(number%3==1)
+            return pow(3,(number/3)-1)*2*2;
+        else 
+            return pow(3,(number/3))*(number%3);
+            
+        //这里其实是错误的，如果剪完3之后剩下的是4，不应该再剪3了，应该剪2+2，不知道为何通过了
+        //return pow(3,(number/3))*(number%3);
+        */
+    }
+};
+```
+
+书本题解:
+> 动态规划
+首先定义函数f(n)为把长度为n的绳子剪成若干段后各段长度乘积的最 大值。在剪第一刀的时候，我们有n-1种可能的选择，也就是剪出来的第 一段绳子的可能长度分别为1,2,...,n-1因此f(n)=max(f(i)xf(n-i)),其中 0<i<n。
+这是一个从上至下的递归公式。由于递归会有很多重复的子问题，从 而有大量不必要的重复计算。一个更好的办法是按照从卜而上的顺序计算, 也就是说我们先得到f(2)、f(3),再得到f(4)、f(5),直到得到f(n)。
+当绳子的长度为2时，只可能剪成长度都为1的两段，因此f(2)等于1 当绳子的长度为3时，可能把绳子剪成长度分别为1和2的两段或者长度都为1的三段，由于1x2>1x1x1,因此f(3)=2
+在上述代码中，产问题的最优解存储在数组products里。
+为了求解f(i)，我们需要求 出所有可能的并比较得出它们的最大值。这就是代码中第二个for循环的功能。
+```
+int maxProductAfterCutting_solution1(int length)
+{
+    if(length < 2)
+        return 0;
+    if(length == 2)
+        return 1;
+    if(length == 3)
+        return 2;
+
+    int* products = new int[length + 1];
+    products[0] = 0;
+    products[1] = 1;
+    products[2] = 2;
+    products[3] = 3;
+
+    int max = 0;
+    for(int i = 4; i <= length; ++i)
+    {
+        max = 0;
+        for(int j = 1; j <= i / 2; ++j)
+        {
+            int product = products[j] * products[i - j];
+            if(max < product)
+                max = product;
+
+            products[i] = max;
+        }
+    }
+
+    max = products[length];
+    delete[] products;
+
+    return max;
+}
+```
+
+> 贪婪算法
+如果我们按照如下的策略来剪绳子，则得到的各段绳子的长度的乘积将最大：当n>=5时，我们尽可能多地剪长度为3的绳子；当剩下的绳子长度为4时，把绳子剪成两段长度为2的绳子。
+这种思路的正确性证明：首先，当n>=5的时候，我们可以 证明2(n-2)>n并且3(n-3)>n。也就是说，当绳子剩下的长度大于或者等于 5的时候，我们就把它剪成长度为3或者2的绳子段。另外，当n>=5时， 3(n-3)>=2(n-2),因此我们应该尽可能地多剪长度为3的绳子段。
+前面证明的前提是n>=5。那么当绳子的长度为4呢？在长度为4的绳子上剪一刀，有两种可能的结果：剪成长度分别为1和3的两根绳子，或 者两根长度都为2的绳子。注意到2X2>1X3,同时2X2=4,也就是说，当绳子长度为4时其实没有必要剪，只是题目的要求是至少要剪一刀。
+
+```
+int maxProductAfterCutting_solution2(int length)
+{
+    if(length < 2)
+        return 0;
+    if(length == 2)
+        return 1;
+    if(length == 3)
+        return 2;
+
+    // 尽可能多地减去长度为3的绳子段
+    int timesOf3 = length / 3;
+
+    // 当绳子最后剩下的长度为4的时候，不能再剪去长度为3的绳子段。
+    // 此时更好的方法是把绳子剪成长度为2的两段，因为2*2 > 3*1。
+    if(length - timesOf3 * 3 == 1)
+        timesOf3 -= 1;
+
+    int timesOf2 = (length - timesOf3 * 3) / 2;
+
+    return (int) (pow(3, timesOf3)) * (int) (pow(2, timesOf2));
+}
+```
