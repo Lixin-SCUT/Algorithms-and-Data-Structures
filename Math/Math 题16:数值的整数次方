@@ -1,0 +1,66 @@
+> 题目描述
+给定一个double类型的浮点数base和int类型的整数exponent。求base的exponent次方。
+保证base和exponent不同时为0
+
+```
+class Solution {
+public:
+    double Power(double base, int exponent) {
+        if(exponent==0)
+            return 1;
+        double res;
+        bool flag=false;
+        if(exponent<0){
+            flag=true;
+            exponent=-exponent;
+        }
+        res=base;
+        if(exponent%2)
+            res=Power(base*base,exponent/2)*base;
+        else
+            res=Power(base*base,exponent/2);
+        if(flag)
+            res=1.0/res;
+        return res;
+    }
+};
+```
+值得改进的点：除以2改为右移，求余运算符改为位与运算符，提高效率
+
+> 书本题解：
+首先需要考虑输入的指数(exponent)小于1 (零和负数)的情况
+当指数为负数的时候，可以先对指数求绝对值，算出次方的结果之后再取倒数。
+当底数(base)是零且指数是负数的时候，如果不进行特殊处理，就会出现对0求倒数，从而导致程序运行出错。 
+最后需要指出的是，由于0的0次方在数学上是没有意义的，因此无论输出是0还是1都是可以接受的，但这都需要和面试官说清楚，表明我 们己经考虑到这个边界值了。
+采用全局变量来标识是否出错
+同时可以用如下公式求a的n次方
+![](file:///Users/lixin/Documents/Gridea/post-images/1581648186725.png)
+
+```
+double PowerWithUnsignedExponent(double base, unsigned int exponent)
+{
+    if (exponent == 0)
+        return 1;
+    if (exponent == 1)
+        return base;
+
+    double result = PowerWithUnsignedExponent(base, exponent >> 1);
+    result *= result;
+    if ((exponent & 0x1) == 1)
+        result *= base;
+
+    return result;
+}
+
+bool equal(double num1, double num2)
+{
+    if ((num1 - num2 > -0.0000001) && (num1 - num2 < 0.0000001))
+        return true;
+    else
+        return false;
+}
+```
+
+> 最后一个细节：位运算的效率比乘除法以及求余运算的效率高很多，可以使用右移运算符代替除以2，用位与代替了求余运算符（%）来判断一个数是奇数还是偶数。
+M%N:当N是2的次方时，M%N=M&(N-1)
+另外需要注意如果是double，无法直接比较是否相等，需要使用它们的差值进行判断
