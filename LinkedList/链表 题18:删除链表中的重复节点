@@ -1,0 +1,84 @@
+> 题目描述
+在一个排序的链表中，存在重复的结点，请删除该链表中重复的结点，重复的结点不保留，返回链表头指针。 例如，链表1->2->3->3->4->4->5 处理后为 1->2->5
+
+注意和leetcode不同，这里必须delete节点，而不是仅仅连接起来就行
+这道题其实可以只使用一个curnode就完成的了，但是用了pre更加直观
+中途忘了把pre和cur接上了，然后又搞混了while的嵌套，还是得细心一点
+
+```
+class Solution {
+public:
+    ListNode* deleteDuplication(ListNode* pHead)
+    {
+        if(pHead==NULL)return NULL;
+        ListNode *virHead=new ListNode(0);
+        virHead->next=pHead;
+        ListNode *preNode=virHead;
+
+        while(preNode){
+            ListNode *curNode=preNode->next;
+            int value;
+            while(curNode&&curNode->next&&curNode->val==curNode->next->val){
+                value=curNode->val;
+                while(curNode&&curNode->val==value){
+                    ListNode *temp=curNode;
+                    curNode=curNode->next;
+                    delete temp;
+                }
+            }
+             preNode->next=curNode;
+             preNode=curNode;
+        }
+        return virHead->next;
+    }
+};
+```
+
+书本题解：
+> 头节点可能与后面的节点重复，也就是说头节 点也可能被删除
+从头遍历整个链表。如果当前节点(代码中的pNode)的 值与下一个节点的值相同，那么它们就是重复的节点，都可以被删除。为 了保证删除之后的链表仍然是相连的，我们要把当前节点的前一个节点(代 码中的pPreNode)和后面值比当前节点的值大的节点相连。我们要确保 pPreNode始终与下一个没有重复的节点连接在一起。
+```
+void DeleteDuplication(ListNode** pHead)
+{
+    if(pHead == nullptr || *pHead == nullptr)
+        return;
+
+    ListNode* pPreNode = nullptr;
+    ListNode* pNode = *pHead;
+    while(pNode != nullptr)
+    {
+        ListNode *pNext = pNode->m_pNext;
+        bool needDelete = false;
+        if(pNext != nullptr && pNext->m_nValue == pNode->m_nValue)
+            needDelete = true;
+
+        if(!needDelete)
+        {
+            pPreNode = pNode;
+            pNode = pNode->m_pNext;
+        }
+        else
+        {
+            int value = pNode->m_nValue;
+            ListNode* pToBeDel = pNode;
+            while(pToBeDel != nullptr && pToBeDel->m_nValue == value)
+            {
+                pNext = pToBeDel->m_pNext;
+
+                delete pToBeDel;
+                pToBeDel = nullptr;
+
+                pToBeDel = pNext;
+            }
+
+            if(pPreNode == nullptr)
+                *pHead = pNext;
+            else
+                pPreNode->m_pNext = pNext;
+            pNode = pNext;
+        }
+    }
+}
+```
+
+注意必须一个一个节点删除，不能像leetcode那样直接接上next，因为动态内存需要手动delete
