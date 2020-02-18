@@ -1,0 +1,117 @@
+题目描述
+输入一个整数数组，实现一个函数来调整该数组中数字的顺序，使得所有的奇数位于数组的前半部分，所有的偶数位于数组的后半部分，并保证奇数和奇数，偶数和偶数之间的相对位置不变。
+
+【未做出】
+一开始想着就像快速排序那样，从两边开始，遇到不符合的就交换，后来发现一个问题就是[2,1,3]这种交换了变成[3,1,2]，1和3就没法保证相对位置不变了
+然后想着从中间开始，但是没法确认奇数偶数的数量的话也没办法啊。。。比如211111，最后2会交换到哪里呢？
+
+网友题解：
+
+ * 1.要想保证原有次序，则只能顺次移动或相邻交换。
+ * 2.i从左向右遍历，找到第一个偶数。
+ * 3.j从i+1开始向后找，直到找到第一个奇数。
+ * 4.将[i,...,j-1]的元素整体后移一位，最后将找到的奇数放入i位置，然后i++。
+ * 5.終止條件：j向後遍歷查找失敗。
+
+实现的时候也需要注意一下
+1.此题和书本的题目并不完全一致，书本是不要求稳定性的，可以使用双指针
+2.本题完全可以参考插入排序使用空间换时间，比如两次遍历，第一次找奇数第二次找偶数，但是比较简单，所以我针对不使用额外空间的方法
+3.基本思想也是插入排序，首先i是指第一个偶数，所以i只需要一次遍历，后面只需要在调动的时候++i即可
+4.j不断寻找剩下的奇数并通过循环后移将奇数插入前面
+5.我不小心把k的判断条件写成了<=,一直报错，所以一定要注意细节
+
+```
+class Solution {
+public:
+    void reOrderArray(vector<int> &array) {
+        int i=0;
+        for(;i<array.size();++i)
+            if(array[i]%2==0)
+                break;
+        for(int j=i;j<array.size();++j)
+            if(array[j]%2){
+                int temp=array[j];
+                for(int k=j;k>=i+1;--k)
+                    array[k]=array[k-1];
+                array[i]=temp;
+                ++i;
+                cout<<j<<" "<<i<<endl;
+            }
+    }
+};
+```
+
+书本题解：
+> 题目：输入一个整数数组，实现一个函数来调整该数组中数字的顺序, 使得所有奇数位于数组的前半部分，所有偶数位于数组的后半部分。
+基本功能的解法：可以维护两个指针：第一个指针初始化时指向数组的第一 个数字，它只向后移动；第二个指针初始化时指向数组的最后一个数字， 它只向前移动。在两个指针相遇之前，第一个指针总是位于第二个指针的 前面。如果第一个指针指向的数字是偶数，并且第二个指针指向的数字是奇数，则交换这两个数字。
+如果将题目要求进行修改，比如整理负数和非负数，要解决新的问题，其实只需要修改函数ReorderOddEven中的两处判断的标准，而大的逻辑框架完全不需要改动。因此我们可以把这个逻辑框架抽象出来，而把判断的标准变成一个函数指针，也就是用一个单独的函数来判断数字是不是符合标准。这样我们就把整个函数解耦成两部分：一是判断数字应该在数组前半部分还是后半部分的标准；二是拆分数组的操作。
+解耦的好处就是提高了代码的重用性，为功能扩展提供了便利。
+
+```
+// ====================方法一====================
+void ReorderOddEven_1(int *pData, unsigned int length)
+{
+    if(pData == nullptr || length == 0)
+        return;
+
+    int *pBegin = pData;
+    int *pEnd = pData + length - 1;
+
+    while(pBegin < pEnd)
+    {
+        // 向后移动pBegin，直到它指向偶数
+        while(pBegin < pEnd && (*pBegin & 0x1) != 0)
+            pBegin ++;
+
+        // 向前移动pEnd，直到它指向奇数
+        while(pBegin < pEnd && (*pEnd & 0x1) == 0)
+            pEnd --;
+
+        if(pBegin < pEnd)
+        {
+            int temp = *pBegin;
+            *pBegin = *pEnd;
+            *pEnd = temp;
+        }
+    }
+}
+
+// ====================方法二====================
+void ReorderOddEven_2(int *pData, unsigned int length)
+{
+    Reorder(pData, length, isEven);
+}
+
+void Reorder(int *pData, unsigned int length, bool (*func)(int))
+{
+    if(pData == nullptr || length == 0)
+        return;
+
+    int *pBegin = pData;
+    int *pEnd = pData + length - 1;
+
+    while(pBegin < pEnd) 
+    {
+        // 向后移动pBegin
+        while(pBegin < pEnd && !func(*pBegin))
+            pBegin ++;
+
+        // 向前移动pEnd
+        while(pBegin < pEnd && func(*pEnd))
+            pEnd --;
+
+        if(pBegin < pEnd)
+        {
+            int temp = *pBegin;
+            *pBegin = *pEnd;
+            *pEnd = temp;
+        }
+    }
+}
+
+bool isEven(int n)
+{
+    return (n & 1) == 0;
+}
+
+```
