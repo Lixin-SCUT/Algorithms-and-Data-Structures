@@ -1,0 +1,109 @@
+题目描述
+给一个链表，若其中包含环，请找出该链表的环的入口结点，否则，输出null。
+
+这道题一个就是hashset，一个就是双指针法
+我并没有参考书本的双指针法，而是使用了leetcode的方法，但是需要注意赋新值给快指针时需要slow也前进一步，因为相当于fast先走一步，所以slow也必须next一次（需要复习一下leetcode上的数学证明）
+
+```
+class Solution {
+public:
+    //双指针
+    ListNode* EntryNodeOfLoop(ListNode* pHead){
+        if(pHead==NULL)
+            return NULL;
+        ListNode *fast,*slow;
+        fast=pHead->next;
+        slow=pHead;
+        while(fast!=slow){
+            if(fast==NULL||fast->next==NULL)
+                return NULL;
+            fast=fast->next->next;
+            slow=slow->next;
+        }
+        slow=slow->next;
+        fast=pHead; //注意因为这一步相当于fast先走一步，所以slow也必须next一次
+        while(slow!=fast){
+            slow=slow->next;
+            fast=fast->next;
+        }
+        return slow;
+    }
+    /*
+    //使用hashset
+    ListNode* EntryNodeOfLoop(ListNode* pHead)
+    {
+        unordered_set<ListNode*> Node_set;
+        if(pHead==NULL)
+              return NULL;
+        while(pHead!=NULL){
+            if(Node_set.count(pHead))
+                return pHead;
+            Node_set.insert(pHead);
+            pHead=pHead->next;
+        }
+        return NULL;
+    }
+    */
+};
+```
+
+书本题解：
+解决这个问题的第一步是如何确定一个链表中包含环。受到面试题22 的启发，我们可以用两个指针来解决这个问题。和前面的问题一样，定义 两个指针，同时从链表的头节点出发，一个指针一次走一步，另一个指针 一次走两步。如果走得快的指针追上了走得慢的指针，那么链表就包含环； 如果走得快的指针走到了链表的末尾(m_pNext指向NULL)都没有追上第 一个指针，那么链表就不包含环。
+第二步是如何找到环的入口。我们还是可以用两个指针来解决这个问 题。先定义两个指针P|和P2指向链表的头节点。如果链表中的环有n个节 点，则指针Pi先在链表上向前移动n步，然后两个指针以相同的速度向前 移动。当第二个指针指向环的入口节点时，第一个指针已经围绕着环走了 一圈，又回到了入口节点。
+剩下的问题是如何得到环中节点的数目。我们在前面提到判断一个链 表里是否有环时用到了一快一慢两个指针。如果两个指针相遇，则表明链 表中存在环。两个指针相遇的节点一定是在环中。可以从这个节点出发， 一边继续向前移动一边计数，当再次回到这个节点时，就可以得到环中节 点数了。
+```
+ListNode* MeetingNode(ListNode* pHead)
+{
+    if(pHead == nullptr)
+        return nullptr;
+
+    ListNode* pSlow = pHead->m_pNext;
+    if(pSlow == nullptr)
+        return nullptr;
+
+    ListNode* pFast = pSlow->m_pNext;
+    while(pFast != nullptr && pSlow != nullptr)
+    {
+        if(pFast == pSlow)
+            return pFast;
+
+        pSlow = pSlow->m_pNext;
+
+        pFast = pFast->m_pNext;
+        if(pFast != nullptr)
+            pFast = pFast->m_pNext;
+    }
+    return nullptr;
+}
+
+ListNode* EntryNodeOfLoop(ListNode* pHead)
+{
+    ListNode* meetingNode = MeetingNode(pHead);
+    if(meetingNode == nullptr)
+        return nullptr;
+
+    // 得到环中结点的数目
+    int nodesInLoop = 1;
+    ListNode* pNode1 = meetingNode;
+    while(pNode1->m_pNext != meetingNode)
+    {
+        pNode1 = pNode1->m_pNext;
+        ++nodesInLoop;
+    }
+
+    // 先移动pNode1，次数为环中结点的数目
+    pNode1 = pHead;
+    for(int i = 0; i < nodesInLoop; ++i)
+        pNode1 = pNode1->m_pNext;
+
+    // 再移动pNode1和pNode2
+    ListNode* pNode2 = pHead;
+    while(pNode1 != pNode2)
+    {
+        pNode1 = pNode1->m_pNext;
+        pNode2 = pNode2->m_pNext;
+    }
+
+    return pNode1;
+}
+```
