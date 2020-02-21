@@ -1,0 +1,67 @@
+> 题目描述
+输入一个链表，反转链表后，输出新链表的表头。链表节点定义如下：
+/*
+struct ListNode {
+	int val;
+	struct ListNode *next;
+	ListNode(int x) :
+			val(x), next(NULL) {
+	}
+};*/
+
+同样地需要三个指针，注意一定要记得`ListNode *pre,*cur,*cur_next;`是每个变量都需要\*号，否则的话就等于ListNode了
+然后其实这一题不需要虚拟头节点，完全可以pre声明为NULL，配合while(cur!=NULL)甚至可以省略掉判断头节点是否为NULL
+
+```
+class Solution {
+public:
+    ListNode* ReverseList(ListNode* pHead) {
+        ListNode *pre,*cur,*cur_next;
+        pre=NULL;
+        cur=pHead;
+        while(cur!=NULL){
+            cur_next=cur->next;
+            cur->next=pre;
+            pre=cur;
+            cur=cur_next;
+        }
+        return pre;
+    }
+};
+```
+
+书本题解：
+由于节点i的m_pNext指向了它的前一个节点，导致我们无法在链表中遍历到节点j。为了避免链表在节点i处断开，我们需要在调整节点i的m_pNext之前，把节点j保存下来。
+也就是说，我们在调整节点i的m_pNext指针时，除了需要知道节点i 本身，还需要知道i的前一个节点h,因为我们需要把节点i的m_pNext指向节点h。同时，我们还需要事先保存i的一个节点j，以防止链表断开。 因此，相应地我们需要定义3个指针，分别指向当前遍历到的节点、它的 前一个节点及后一个节点。
+最后我们试着找到反转后链表的头节点。不难分析出反转后链表的头节点是原始链表的尾节点。什么节点是尾节点？自然是m_pNext为nullptr 的节点。
+需要避免的问题：
+•	输入的链表头指针为nullptr或者整个链表只有一个节点时，程序立即崩溃。
+•	反转后的链表出现断裂。
+•	返回的反转之后的头节点不是原始链表的尾节点。
+至少应该想到以下几类测试用例对代码进行功能测试：
+•	输入的链表头指针是nullptr。
+•	输入的链表只有一个节点。
+•	输入的链表有多个节点。
+```
+ListNode* ReverseList(ListNode* pHead)
+{
+    ListNode* pReversedHead = nullptr;
+    ListNode* pNode = pHead;
+    ListNode* pPrev = nullptr;
+    while(pNode != nullptr)
+    {
+        ListNode* pNext = pNode->m_pNext;
+
+        if(pNext == nullptr)
+            pReversedHead = pNode;
+
+        pNode->m_pNext = pPrev;
+
+        pPrev = pNode;
+        pNode = pNext;
+    }
+
+    return pReversedHead;
+}
+```
+
