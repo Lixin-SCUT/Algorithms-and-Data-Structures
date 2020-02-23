@@ -1,0 +1,83 @@
+> 题目描述
+输入两棵二叉树A，B，判断B是不是A的子结构。（ps：我们约定空树不是任意一个树的子结构）
+
+【未做出】
+首先一定要注意递归和判断中使用的函数和顺序（这一点其实已经做得很好了）HasSubtree函数负责确定根结点，isSubTree负责遍历每个结点是否相符
+我犯的致命错误就是忘记了isSubTree中判断的是子结构，cur2出现NULL的时候cur1完全有可能不是NULL
+一定要理解先判断cur2为NULL再判断cur1为NULL的原因
+
+```
+class Solution {
+public:
+    bool HasSubtree(TreeNode* pRoot1, TreeNode* pRoot2)
+    {
+        if(pRoot1==NULL||pRoot2==NULL)
+             return false;
+        return isSubTree(pRoot1,pRoot2)||HasSubtree(pRoot1->left,pRoot2)||HasSubtree(pRoot1->right,pRoot2);
+    }
+        
+    bool isSubTree(TreeNode* cur1, TreeNode* cur2){
+        if(cur2==NULL)
+            return true;
+        if(cur1==NULL)
+            return false;
+        if(cur1->val!=cur2->val)
+            return false;
+        return isSubTree(cur1->left,cur2->left)&&isSubTree(cur1->right,cur2->right);
+    }
+};
+```
+
+书本题解：
+要查找树A中是否存在和树B结构一样的子树，我们可以分成两步：第一步，在树A中找到和树B的根节点的值一样的节点R;第二步，判断树A中以R为根节点的子树是不是包含和树B一样的结构。
+第一步在树A中查找与根节点的值一样的节点，这实际上就是树的遍历。对二叉树这种数据结构熟悉的读者自然知道可以用递归的方法去遍历, 也可以用循环的方法去遍历。由于递归的代码实现比较简洁，如果没有特别要求，那么我们通常会采用递归的方式。
+一定要注意边界条件的检查，即检查空指针。当树A或树B为空的时候，定义相应的输出。
+我们递归调用HasSubtree遍历二叉树A。如果发现某一节点的值和树B的头节点的值相同，则调用DoesTreelHaveTree2,进行第二步判断。
+第二步是判断树A中以R为根节点的子树是不是和树B具有相同的结构。同样，我们也可以用递归的思路来考虑：如果节点R的值和树B的根节点不相同，则以R为根节点的子树和树B肯定不具有相同的节点；如果它们的值相同，则递归地判断它们各自的左右节点的值是不是相同。递归的终止条件是我们到达了树A或者树B的叶节点
+需要多处判断一个指针是不是nullptr,这样做是为了避免试图访问空指针而造成程序崩溃，同时也设置了递归调用的退出条件。在写遍历树的代码的时候一定要高度警惕，在每一处需要访问地址的时候都要问自己这个地址有没有可能是nullptr、如果是nullptr则该怎么处理。
+一个细节值得我们注意：本题中节点中值的类型为double，由于计算机表示小数(包括float和double型小数)都有误差，我们不能直接用等号(==)判断两个小数是否相等。如果两个小数的差的绝对值 很小，如小于0.0000001,就可以认为它们相等
+所以在判断两个节点的值是不是相等时，不能直接写pRoot1->m_dbValue == pRoot2->m_ dbValue,这是因为在计算机内表示小数时(包括float和double型小数)都有误差。判断两个小数是否相等，只能判断它们之差的绝对值是不是在一个很小的范围内。如果两个数相差很小，就可以认为它们相等。这就是我 们定义函数Equal的原因。
+```
+bool HasSubtree(BinaryTreeNode* pRoot1, BinaryTreeNode* pRoot2)
+{
+    bool result = false;
+
+    if(pRoot1 != nullptr && pRoot2 != nullptr)
+    {
+        if(Equal(pRoot1->m_dbValue, pRoot2->m_dbValue))
+            result = DoesTree1HaveTree2(pRoot1, pRoot2);
+        if(!result)
+            result = HasSubtree(pRoot1->m_pLeft, pRoot2);
+        if(!result)
+            result = HasSubtree(pRoot1->m_pRight, pRoot2);
+    }
+
+    return result;
+}
+
+bool DoesTree1HaveTree2(BinaryTreeNode* pRoot1, BinaryTreeNode* pRoot2)
+{
+    if(pRoot2 == nullptr)
+        return true;
+
+    if(pRoot1 == nullptr)
+        return false;
+
+    if(!Equal(pRoot1->m_dbValue, pRoot2->m_dbValue))
+        return false;
+
+    return DoesTree1HaveTree2(pRoot1->m_pLeft, pRoot2->m_pLeft) &&
+        DoesTree1HaveTree2(pRoot1->m_pRight, pRoot2->m_pRight);
+}
+
+bool Equal(double num1, double num2)
+{
+    if((num1 - num2 > -0.0000001) && (num1 - num2 < 0.0000001))
+        return true;
+    else
+        return false;
+}
+```
+
+书中思路分析很清楚，包括对函数的分割和返回值的设置，以及对nullptr的检测。
+然后最重点的就是对double和float的相等判断条件。
