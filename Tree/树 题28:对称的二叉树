@@ -1,0 +1,64 @@
+> 题目描述
+请实现一个函数，用来判断一颗二叉树是不是对称的。注意，如果一个二叉树同此二叉树的镜像是同样的，定义其为对称的。
+/*
+struct TreeNode {
+    int val;
+    struct TreeNode *left;
+    struct TreeNode *right;
+    TreeNode(int x) :
+            val(x), left(NULL), right(NULL) {
+    }
+};
+*/
+
+需要注意的点是其实可以重载原函数，提高代码的可读性
+
+```
+class Solution {
+public:
+    bool isSymmetrical(TreeNode* pRoot)
+    {
+        if(pRoot==NULL)
+            return true;
+        return isSymmetrical(pRoot->left,pRoot->right);
+    }
+    
+    bool isSymmetrical(TreeNode* cur1,TreeNode* cur2)
+    {
+        if(cur1==NULL&&cur2==NULL)
+            return true;
+        if(cur1==NULL||cur2==NULL)
+            return false;
+        if(cur1->val!=cur2->val)
+            return false;
+        return isSymmetrical(cur1->left,cur2->right)&&isSymmetrical(cur1->right,cur2->left);
+    }
+};
+```
+
+书本题解：
+通常我们有3种不同的二叉树遍历算法，即前序遍历、中序遍历和后 序遍历。在这3种遍历算法中，都是先遍历左子节点再遍历右子节点。我 们是否可以定义一种遍历算法，先遍历右子节点再遍历左子节点？比如我 们针对前序遍历定义一种对称的遍历算法，即先遍历父节点，再遍历它的 右子节点，最后遍历它的左子节点。
+我们发现可以通过比较二叉树的前序遍历序列和对称前序遍历序列 来判断二叉树是不是对称的。如果两个序列是一样的，那么二叉树就是对称的。
+```
+bool isSymmetrical(BinaryTreeNode* pRoot)
+{
+    return isSymmetrical(pRoot, pRoot);
+}
+
+bool isSymmetrical(BinaryTreeNode* pRoot1, BinaryTreeNode* pRoot2)
+{
+    if(pRoot1 == nullptr && pRoot2 == nullptr)
+        return true;
+
+    if(pRoot1 == nullptr || pRoot2 == nullptr)
+        return false;
+
+    if(pRoot1->m_nValue != pRoot2->m_nValue)
+        return false;
+
+    return isSymmetrical(pRoot1->m_pLeft, pRoot2->m_pRight)
+        && isSymmetrical(pRoot1->m_pRight, pRoot2->m_pLeft);
+}
+```
+
+我的思路和书本的一致，但是需要将NULL改为nullptr，这样符合C++11标准
