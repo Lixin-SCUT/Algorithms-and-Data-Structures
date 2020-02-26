@@ -1,0 +1,110 @@
+题目描述
+输入一个矩阵，按照从外向里以顺时针的顺序依次打印出每一个数字，例如，如果输入如下4 X 4矩阵： 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 则依次打印出数字1,2,3,4,8,12,16,15,14,13,9,5,6,7,11,10.
+
+注意要在循环条件中加上范围是否超标的判断
+
+```
+class Solution {
+public:
+    vector<int> printMatrix(vector<vector<int> > matrix) {
+        vector<int> res;
+        if(matrix.empty())
+               return res;
+        int top,bottom,left,right,i;
+        top=0,left=0;
+        bottom=matrix.size()-1,right=matrix[0].size()-1;
+        while(top<=bottom&&left<=right){
+
+                for(i=left;i<=right&&top<=bottom;++i)
+                    res.push_back(matrix[top][i]);
+                ++top;
+
+
+                for(i=top;i<=bottom&&left<=right;++i)
+                    res.push_back(matrix[i][right]);
+                --right;
+
+                for(i=right;i>=left&&top<=bottom;--i)
+                    res.push_back(matrix[bottom][i]);
+                --bottom;
+
+                for(i=bottom;i>=top&&left<=right;--i)
+                    res.push_back(matrix[i][left]);
+                ++left;
+        }
+        return res;
+    }
+};
+```
+
+书本题解：
+这道题完全没有涉及复杂的数据结构或者高级的算法，看起来是一个 很简单的问题。但实际上解决这个问题时会在代码中包含多个循环，并且 需要判断多个边界条件。
+假设这个矩阵的行数是rows,列数是 columns。我们注意到，左上角的坐标中行标和列标总是相同的，于是可 以在矩阵中选取左上角为(start, start)的一圈作为我们分析的目标。
+值得注意的是，最后一圈有可能退化成只有一行、只有一列，甚至只有一个数字。
+因此，我们要仔细分析打印时每一步的前提条件。第一步总是需要的， 因为打印一圈至少有一步。如果只有一行，那就不用第二步了。也就是需 要第二步的前提条件是终止行号大于起始行号。需要第三步打印的前提条 件是圈内至少有两行两列，也就是说，除了要求终止行号大于起始行号， 还要求终止列号大于起始列号。同理，需要打印第四步的前提条件是至少 有三行两列，因此要求终止行号比起始行号至少大2,同时终止列号大于起始列号。
+```
+void PrintMatrixClockwisely(int** numbers, int columns, int rows)
+{
+    if(numbers == nullptr || columns <= 0 || rows <= 0)
+        return;
+
+    int start = 0;
+
+    while(columns > start * 2 && rows > start * 2)
+    {
+        PrintMatrixInCircle(numbers, columns, rows, start);
+
+        ++start;
+    }
+}
+
+void PrintMatrixInCircle(int** numbers, int columns, int rows, int start)
+{
+    int endX = columns - 1 - start;
+    int endY = rows - 1 - start;
+
+    // 从左到右打印一行
+    for(int i = start; i <= endX; ++i)
+    {
+        int number = numbers[start][i];
+        printNumber(number);
+    }
+
+    // 从上到下打印一列
+    if(start < endY)
+    {
+        for(int i = start + 1; i <= endY; ++i)
+        {
+            int number = numbers[i][endX];
+            printNumber(number);
+        }
+    }
+
+    // 从右到左打印一行
+    if(start < endX && start < endY)
+    {
+        for(int i = endX - 1; i >= start; --i)
+        {
+            int number = numbers[endY][i];
+            printNumber(number);
+        }
+    }
+
+    // 从下到上打印一行
+    if(start < endX && start < endY - 1)
+    {
+        for(int i = endY - 1; i >= start + 1; --i)
+        {
+            int number = numbers[i][start];
+            printNumber(number);
+        }
+    }
+}
+
+void printNumber(int number)
+{
+    printf("%d\t", number);
+}
+```
+
+对比书本的，我觉得还是我的方法更加简便，所以不能只以书为准，要多看看别人的做法
