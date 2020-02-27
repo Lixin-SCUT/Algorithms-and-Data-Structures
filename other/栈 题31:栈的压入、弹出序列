@@ -1,0 +1,72 @@
+题目描述
+> 输入两个整数序列，第一个序列表示栈的压入顺序，请判断第二个序列是否可能为该栈的弹出顺序。假设压入栈的所有数字均不相等。例如序列1,2,3,4,5是某栈的压入顺序，序列4,5,3,2,1是该压栈序列对应的一个弹出序列，但4,3,5,1,2就不可能是该压栈序列的弹出序列。（注意：这两个序列的长度是相等的）
+
+```
+栈的压入、弹出序列
+class Solution {
+public:
+    bool IsPopOrder(vector<int> pushV,vector<int> popV) {
+        if(pushV.empty()||popV.empty()||pushV.size()!=popV.size())
+            return false;
+        stack<int> curV;
+        int len=pushV.size();
+        int i=0,j=0;
+        while(i<len){
+            //记得一定要先判断是否为空，否则top会报错
+            if(curV.empty()||curV.top()!=popV[i])
+                if(j<len)
+                    curV.push(pushV[j]),++j;
+                else
+                    return false;
+            else
+                curV.pop(),++i;
+        }
+        return true;
+    }
+};
+```
+> 入栈、出栈的过程：我们可以找到判断一个序列是不是栈的 弹出序列的规律：如果下一个弹出的数字刚好是栈顶数字，那么直接弹出； 如果下一个弹出的数字不在栈顶，则把压栈序列中还没有入栈的数字压入辅助栈，直到把下一个需要弹出的数字压入栈顶为止；如果所有数字都压入栈 后仍然没有找到下一个弹出的数字，那么该序列不可能是一个弹出序列。
+```
+bool IsPopOrder(const int* pPush, const int* pPop, int nLength)
+{
+    bool bPossible = false;
+
+    if(pPush != nullptr && pPop != nullptr && nLength > 0)
+    {
+        const int* pNextPush = pPush;
+        const int* pNextPop = pPop;
+
+        std::stack<int> stackData;
+
+        while(pNextPop - pPop < nLength)
+        {
+            // 当辅助栈的栈顶元素不是要弹出的元素
+            // 先压入一些数字入栈
+            while(stackData.empty() || stackData.top() != *pNextPop)
+            {
+                // 如果所有数字都压入辅助栈了，退出循环
+                if(pNextPush - pPush == nLength)
+                    break;
+
+                stackData.push(*pNextPush);
+
+                pNextPush ++;
+            }
+
+            if(stackData.top() != *pNextPop)
+                break;
+
+            stackData.pop();
+            pNextPop ++;
+        }
+
+        if(stackData.empty() && pNextPop - pPop == nLength)
+            bPossible = true;
+    }
+
+    return bPossible;
+}
+
+```
+
+书本题解的优点在于不会提前返回，一直到最后才返回，可读性高，但是需要的判断条件和结构更复杂，而我的方法就使用了提前返回，结构更加简单
