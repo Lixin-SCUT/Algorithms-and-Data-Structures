@@ -1,0 +1,251 @@
+### 题目一
+> 从上往下打印出二叉树的每个节点，同层节点从左至右打印。
+```
+/*
+struct TreeNode {
+    int val;
+    struct TreeNode *left;
+    struct TreeNode *right;
+    TreeNode(int x) :
+            val(x), left(NULL), right(NULL) {
+    }
+};
+*/
+```
+
+　　非常简单，我用的是一个queue，事先记录好本层的节点个数，然后不断循环就好了
+```
+class Solution {
+public:
+    vector<int> PrintFromTopToBottom(TreeNode* root) {
+        vector<int> res;
+        if(root==NULL)
+            return res;
+        queue<TreeNode*> Nodequeue;
+        Nodequeue.push(root);
+        int len;
+        TreeNode *cur;
+        while((len=Nodequeue.size())>0){
+            for(int i=0;i<len;++i){
+                cur=Nodequeue.front();
+                Nodequeue.pop();
+                res.push_back(cur->val);
+                if(cur->left)
+                    Nodequeue.push(cur->left);
+                if(cur->right)
+                    Nodequeue.push(cur->right);
+            }
+        }
+        return res;
+    }
+};
+```
+
+书本题解：
+> 从上到下打印二叉树的规律： 每次打印一个节点的时候，如果该节点有子节点，则把该节点的子节点放 到一个队列的末尾。接下来到队列的头部取出最早进入队列的节点，重复前面的打印操作，直至队列中所有的节点都被打印出来。
+```
+void PrintFromTopToBottom(BinaryTreeNode* pRoot)
+{
+    if(pRoot == nullptr)
+        return;
+
+    std::deque<BinaryTreeNode *> dequeTreeNode;
+
+    dequeTreeNode.push_back(pRoot);
+
+    while(dequeTreeNode.size())
+    {
+        BinaryTreeNode *pNode = dequeTreeNode.front();
+        dequeTreeNode.pop_front();
+
+        printf("%d ", pNode->m_nValue);
+
+        if(pNode->m_pLeft)
+            dequeTreeNode.push_back(pNode->m_pLeft);
+
+        if(pNode->m_pRight)
+            dequeTreeNode.push_back(pNode->m_pRight);
+    }
+}
+```
+　　其实队列就很符合要求了，用deque有点牛刀了，不过queue本身也是deque的适配器adapter，所以用queue似乎也没啥问题
+
+　　拓展：如何广度优先遍历一幅有向图？同样也可以基于队列实现。树是图的 一种特殊退化形式，从上到下按层遍历二叉树，从本质上来说就是广度优先遍历二叉树。
+
+　　个人思考：需要使用一个辅助的hash set来保存已输出节点
+
+举一反三：
+　　不管是广度优先遍历一幅有向图还是一棵树，都要用到队列。首先把起始节点（对树而言是根节点）放入队列接下来每次从队列的头部取出 一个节点，遍历这个节点之后把它能到达的节点（对树而言是子节点）都依次放入队列。重复这个遍历过程，直到队列中的节点全部被遍历为止
+
+### 题目二
+> 从上到下按层打印二叉树，同一层的节点按从左到右的顺序打印，每一层打印到一行。
+
+　　这个记得每次循环开始的时候新建一个空的vector元素就好，比较方便的是我使用了back()这个成员函数，使得不用一直去追踪下标或者end()-1，可读性比较高
+```
+class Solution {
+public:
+vector<vector<int> > Print(TreeNode* pRoot) {
+        vector<vector<int>> res;
+        if(pRoot==NULL)
+            return res;
+        queue<TreeNode*> Nodequeue;
+        Nodequeue.push(pRoot);
+        int len;
+        TreeNode *cur;
+        while((len=Nodequeue.size())>0){
+            res.push_back(vector<int>());
+            for(int i=0;i<len;++i){
+                cur=Nodequeue.front();
+                Nodequeue.pop();
+                res.back().push_back(cur->val);
+                if(cur->left)
+                    Nodequeue.push(cur->left);
+                if(cur->right)
+                    Nodequeue.push(cur->right);
+            }
+        }
+        return res;
+    }
+};
+```
+
+书本题解：
+> 这道面试题和前面的面试题类似，也可以用一个队列来保存将要打印的节点。为了把二叉树的每一行单独打印到一行里，我们需要两个变量： 一个变量表示在当前层中还没有打印的节点数：另一个变量表示下一层节点的数目。
+```
+void Print(BinaryTreeNode* pRoot)
+{
+    if(pRoot == nullptr)
+        return;
+
+    std::queue<BinaryTreeNode*> nodes;
+    nodes.push(pRoot);
+    int nextLevel = 0;
+    int toBePrinted = 1;
+    while(!nodes.empty())
+    {
+        BinaryTreeNode* pNode = nodes.front();
+        printf("%d ", pNode->m_nValue);
+
+        if(pNode->m_pLeft != nullptr)
+        {
+            nodes.push(pNode->m_pLeft);
+            ++nextLevel;
+        }
+        if(pNode->m_pRight != nullptr)
+        {
+            nodes.push(pNode->m_pRight);
+            ++nextLevel;
+        }
+
+        nodes.pop();
+        --toBePrinted;
+        if(toBePrinted == 0)
+        {
+            printf("\n");
+            toBePrinted = nextLevel;
+            nextLevel = 0;
+        }
+    }
+}
+```
+
+### 题目三
+题目描述
+> 请实现一个函数按照之字形打印二叉树，即第一行按照从左到右的顺序打印，第二层按照从右至左的顺序打印，第三行按照从左到右的顺序打印，其他行以此类推。
+
+　　这道题就是我一直思索的重点hhh就是如何减少重复的代码和操作。
+　　但是似乎还没有特别好的办法了，我最后还是选择了deque+bool值条件分支
+```
+class Solution {
+public:
+    vector<vector<int> > Print(TreeNode* pRoot) {
+        vector<vector<int>> res;
+        if(pRoot==NULL)
+            return res;
+        queue<TreeNode*> Nodequeue;
+        Nodequeue.push(pRoot);
+        int len;
+        TreeNode *cur;
+        bool ltor=true;
+        while((len=Nodequeue.size())>0){
+            deque<int> storage;
+            if(ltor){
+                for(int i=0;i<len;++i){
+                    cur=Nodequeue.front();
+                    Nodequeue.pop();
+                    storage.push_back(cur->val);//这里使用back()返回引用,避免了使用临时变量去记住最后一个元素
+                    if(cur->left)
+                        Nodequeue.push(cur->left);
+                    if(cur->right)
+                        Nodequeue.push(cur->right);
+                }
+            }else{
+                for(int i=0;i<len;++i){
+                    cur=Nodequeue.front();
+                    Nodequeue.pop();
+                    storage.push_front(cur->val);//这里使用back()返回引用,避免了使用临时变量去记住最后一个元素
+                    if(cur->left)
+                        Nodequeue.push(cur->left);
+                    if(cur->right)
+                        Nodequeue.push(cur->right);
+                }
+            }
+            res.push_back(vector<int>(storage.begin(),storage.end()));
+            ltor=!ltor;
+        }      
+        return res;
+    }
+};
+```
+
+书本题解：
+>当二叉树的根节点（节点1）打印之后，它的左子节点（节点2）和右 子节点（节点3）先后保存到一个数据容器里。值得注意的是，在打印第1 层的节点时，先打印节点3,再打印节点2。看起来节点在这个数据容器里 是后进先出的，因此这个数据容器可以用栈来实现。
+>接着打印第二层的两个节点。根据之字形顺序，先打印节点3,再打印 节点2,并把它们的子节点保存到一个数据容器里。我们注意到在打印第三 层的时候，先打印节点2的两个子节点（节点4和节点5）,再打印节点3 的两个子节点（节点6和节点7）。这意味着我们仍然可以用一个栈来保存 节点2和节点3的子节点。
+我们还注意到第三层的节点是从左向右打印的，这意味着节点4在节 点节点5之前打印，节点6在节点7之前打印。按照栈的后进先出特点， 应该先把节点7保存到栈里，接着保存节点6,再接下来是节点5和节点4。 也就是说，在打印第二层节点的时候，我们先把右子节点保存到栈里，再 把左子节点保存到栈里。保存子节点的顺序和打印第一层时不一样。
+>接下来打印第三层的节点。和先前一样，在打印第三层节点的同时， 我们要把第四层的节点保存到一个栈里。由于第四层的打印顺序是从右到 左，因此保存的顺序是先保存左子节点，再保存右子节点。这和保存第一 层根节点的两个子节点的顺序相同。
+>分析到这里，我们可以总结出规律：按之字形顺序打印二叉树需要两 个栈。我们在打印某一层的节点时，把下一层的子节点保存到相应的栈里。 如果当前打印的是奇数层（第一层、第三层等），则先保存左子节点再保存右子节点到第一个栈里；如果当前打印的是偶数层（第二层、第四层等）， 则先保存右子节点再保存左子节点到第二个栈里。
+
+```
+void Print(BinaryTreeNode* pRoot)
+{
+    if(pRoot == nullptr)
+        return;
+
+    std::stack<BinaryTreeNode*> levels[2];
+    int current = 0;
+    int next = 1;
+
+    levels[current].push(pRoot);
+    while(!levels[0].empty() || !levels[1].empty())
+    {
+        BinaryTreeNode* pNode = levels[current].top();
+        levels[current].pop();
+
+        printf("%d ", pNode->m_nValue);
+
+        if(current == 0)
+        {
+            if(pNode->m_pLeft != nullptr)
+                levels[next].push(pNode->m_pLeft);
+            if(pNode->m_pRight != nullptr)
+                levels[next].push(pNode->m_pRight);
+        }
+        else
+        {
+            if(pNode->m_pRight != nullptr)
+                levels[next].push(pNode->m_pRight);
+            if(pNode->m_pLeft != nullptr)
+                levels[next].push(pNode->m_pLeft);
+        }
+
+        if(levels[current].empty())
+        {
+            printf("\n");
+            current = 1 - current;
+            next = 1 - next;
+        }
+    }
+}
+```
+书本的题解是使用01下标法来简化容器的swap，但是还是需要分支条件来保证push的顺序，而且我觉得既然都用了分支了，可以考虑队列和栈配合使用
+
