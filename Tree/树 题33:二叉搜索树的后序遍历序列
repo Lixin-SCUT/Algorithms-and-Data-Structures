@@ -1,0 +1,97 @@
+题目描述
+> 输入一个整数数组，判断该数组是不是某二叉搜索树的后序遍历的结果。如果是则输出Yes,否则输出No。假设输入的数组的任意两个数字都互不相同。
+```
+/*
+struct TreeNode {
+	int val;
+	struct TreeNode *left;
+	struct TreeNode *right;
+	TreeNode(int x) :
+			val(x), left(NULL), right(NULL) {
+	}
+};*/
+```
+
+首先看一下后序遍历的特性 
+1.根节点在最后
+2.数组中有一个分界点，分界点前的数字全部小于根节点，分界点后的数字全部大于根节点
+&emsp;&emsp;所以我的想法是先找出根节点，再去找分界点，再去看看分界点后面的数字是不是全都符合条件
+&emsp;&emsp;注意要考虑某一个子树为空的情况，所以要先判断beg和end的关系，并且应该返回true
+
+```
+class Solution {
+public:
+    bool VerifySquenceOfBST(vector<int> sequence) {
+        if(sequence.empty())
+            return false;
+        return VerifySquenceOfBST(sequence,0,sequence.size()-1);
+    }
+    
+    bool VerifySquenceOfBST(vector<int> &sequence,int beg,int end){
+        if(beg>=end)
+            return true;
+        int root=sequence[end];
+        int locate=beg;
+        for(int i=beg;i<end;++i)
+            if(sequence[i]==root)
+                return false;
+            else if(sequence[i]>root)
+                break;
+            else
+                ++locate;
+        for(int i=locate;i<end;++i)
+            if(sequence[i]<root)
+                return false;
+        return VerifySquenceOfBST(sequence,beg,locate-1)
+            &&VerifySquenceOfBST(sequence,locate,end-1);
+    }
+```
+
+书本题解：
+> 在后序遍历得到的序列中，最后一个数字是树的根节点的值。数组中 前面的数字可以分为两部分：第一部分是左子树节点的值，它们都比根节 点的值小；第二部分是右子树节点的值，它们都比根节点的值大。
+我们接下来用同样的方法确定与数组每一部分对应的子树的结构。这 其实就是一个递归的过程。
+我们再来分析另一个整数数组｛7, 4, 6, 5｝o后序遍历的最后一个数字是 根节点，因此根节点的值是5。由于第一个数字7大于5,因此在对应的二 叉搜索树中，根节点上是没有左子树的，数字7、4和6都是右子树节点的值。但我们发现在右子树中有一个节点的值是4,比根节点的值5小，这违背了二叉搜索树的定义。因此，不存在一棵二叉搜索树，它的后序遍历结果是｛7,4,6,5}。
+```
+// BST：Binary Search Tree，二叉搜索树
+bool VerifySquenceOfBST(int sequence[], int length)
+{
+    if(sequence == nullptr || length <= 0)
+        return false;
+
+    int root = sequence[length - 1];
+
+    // 在二叉搜索树中左子树的结点小于根结点
+    int i = 0;
+    for(; i < length - 1; ++ i)
+    {
+        if(sequence[i] > root)
+            break;
+    }
+
+    // 在二叉搜索树中右子树的结点大于根结点
+    int j = i;
+    for(; j < length - 1; ++ j)
+    {
+        if(sequence[j] < root)
+            return false;
+    }
+
+    // 判断左子树是不是二叉搜索树
+    bool left = true;
+    if(i > 0)
+        left = VerifySquenceOfBST(sequence, i);
+
+    // 判断右子树是不是二叉搜索树
+    bool right = true;
+    if(i < length - 1)
+        right = VerifySquenceOfBST(sequence + i, length - i - 1);
+
+    return (left && right);
+}
+```
+
+相关题目：
+&emsp;&emsp;输入一个整数数组，判断该数组是不是某二叉搜索树的前序遍历结果。 这和前面问题的后序遍历很类似，只是在前序遍历得到的序列中，第一个 数字是根节点的值。
+
+举一反三：
+&emsp;&emsp;如果面试题要求处理一棵二叉树的遍历序列，则可以先找到二叉树的 根节点，再基于根节点把整棵树的遍历序列拆分成左子树对应的子序列和右子树对应的子序列，接下来再递归地处理这两个子序列，题7 “重建二叉树”应用的也是这种思路
