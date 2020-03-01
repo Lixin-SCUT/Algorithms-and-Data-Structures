@@ -11,9 +11,9 @@ struct RandomListNode {
 };
 ```
 
-一开始我想着每次遇到未存在节点就都创建新节点（包括next和random）并存进hashmap里面去
-但是后面发现这样很麻烦，每次都要对next和random判断是否存在，并且如果next已存在的话进一步又要特殊处理
-所以不如先循环一次构造next，把所有节点构造出来，然后再循环利用hashmap链接random
+&emsp;&emsp;一开始我想着每次遇到未存在节点就都创建新节点（包括next和random）并存进hashmap里面去
+&emsp;&emsp;但是后面发现这样很麻烦，每次都要对next和random判断是否存在，并且如果next已存在的话进一步又要特殊处理
+&emsp;&emsp;所以不如先循环一次构造next，把所有节点构造出来，然后再循环利用hashmap链接random
 
 ```
 */
@@ -89,48 +89,75 @@ public:
 ```
 
 书本题解：
-在复杂链表的节点中，除了有指向下一个节点的指针(实线箭头), 还有指向任意节点的指针
-分为两步：第一步仍然是复制原始链表 上的每个节点N创建N'然后把这些创建出来的节点用m_pNext链接起来。 同时我们把＜N,N'＞的配对信息放到一个哈希表中；第二步还是设置复制链 表上每个节点的m_pSibling。如果在原始链表中节点N的m_pSibling指向节点S,那么在复制链表中，对应的N'，应该指向S'由于有了哈希表，我 们可以用O⑴的时间根据S找到S'。
-相当于用空间换时间。对于有n个节点的链表，我们需要 一个大小为O(n)的哈希表，也就是说我们以O(n)的空间消耗把时间复杂度 由O(n^2)降低到O(n)
-接下来我们再换一种思路，在不用辅助空间的情况下实现O(n)的时间效率。
+> &emsp;&emsp;在复杂链表的节点中，除了有指向下一个节点的指针(实线箭头), 还有指向任意节点的指针
+&emsp;&emsp;分为两步：第一步仍然是复制原始链表 上的每个节点N创建N'然后把这些创建出来的节点用m_pNext链接起来。 同时我们把＜N,N'＞的配对信息放到一个哈希表中；第二步还是设置复制链 表上每个节点的m_pSibling。如果在原始链表中节点N的m_pSibling指向节点S,那么在复制链表中，对应的N'，应该指向S'由于有了哈希表，我 们可以用O⑴的时间根据S找到S'。
+&emsp;&emsp;相当于用空间换时间。对于有n个节点的链表，我们需要 一个大小为O(n)的哈希表，也就是说我们以O(n)的空间消耗把时间复杂度 由O(n^2)降低到O(n)
+&emsp;&emsp;接下来我们再换一种思路，在不用辅助空间的情况下实现O(n)的时间效率。
 第三种方法的第一步仍然是根据原始链表的每个节点N创建对应的N'这一次，我们把N'链接在N的后面。
-第二步设置复制出来的节点的m_pSibling。假设原始链表上的N的m_pSibling指向节点S,那么其对应复制出来的N，是N的m_pNext指向的节点，同样S'也是S的m_pNext指向的节点。
-第三步把这个长链表拆分成两个链表：把奇数位置的节点用m_pNext 链接起来就是原始链表，把偶数位置的节点用m_pNext链接起来就是复制 出来的链表。
+&emsp;&emsp;第二步设置复制出来的节点的m_pSibling。假设原始链表上的N的m_pSibling指向节点S,那么其对应复制出来的N，是N的m_pNext指向的节点，同样S'也是S的m_pNext指向的节点。
+&emsp;&emsp;第三步把这个长链表拆分成两个链表：把奇数位置的节点用m_pNext 链接起来就是原始链表，把偶数位置的节点用m_pNext链接起来就是复制 出来的链表。
 
 ```
-void ConvertNode(BinaryTreeNode* pNode, BinaryTreeNode** pLastNodeInList);
-
-BinaryTreeNode* Convert(BinaryTreeNode* pRootOfTree)
+ComplexListNode* Clone(ComplexListNode* pHead)
 {
-    BinaryTreeNode *pLastNodeInList = nullptr;
-    ConvertNode(pRootOfTree, &pLastNodeInList);
-
-    // pLastNodeInList指向双向链表的尾结点，
-    // 我们需要返回头结点
-    BinaryTreeNode *pHeadOfList = pLastNodeInList;
-    while(pHeadOfList != nullptr && pHeadOfList->m_pLeft != nullptr)
-        pHeadOfList = pHeadOfList->m_pLeft;
-
-    return pHeadOfList;
+    CloneNodes(pHead);
+    ConnectSiblingNodes(pHead);
+    return ReconnectNodes(pHead);
 }
 
-void ConvertNode(BinaryTreeNode* pNode, BinaryTreeNode** pLastNodeInList)
+void CloneNodes(ComplexListNode* pHead)
 {
-    if(pNode == nullptr)
-        return;
+    ComplexListNode* pNode = pHead;
+    while(pNode != nullptr)
+    {
+        ComplexListNode* pCloned = new ComplexListNode();
+        pCloned->m_nValue = pNode->m_nValue;
+        pCloned->m_pNext = pNode->m_pNext;
+        pCloned->m_pSibling = nullptr;
+ 
+        pNode->m_pNext = pCloned;
+ 
+        pNode = pCloned->m_pNext;
+    }
+}
 
-    BinaryTreeNode *pCurrent = pNode;
+void ConnectSiblingNodes(ComplexListNode* pHead)
+{
+    ComplexListNode* pNode = pHead;
+    while(pNode != nullptr)
+    {
+        ComplexListNode* pCloned = pNode->m_pNext;
+        if(pNode->m_pSibling != nullptr)
+        {
+            pCloned->m_pSibling = pNode->m_pSibling->m_pNext;
+        }
+ 
+        pNode = pCloned->m_pNext;
+    }
+}
 
-    if (pCurrent->m_pLeft != nullptr)
-        ConvertNode(pCurrent->m_pLeft, pLastNodeInList);
-
-    pCurrent->m_pLeft = *pLastNodeInList; 
-    if(*pLastNodeInList != nullptr)
-        (*pLastNodeInList)->m_pRight = pCurrent;
-
-    *pLastNodeInList = pCurrent;
-
-    if (pCurrent->m_pRight != nullptr)
-        ConvertNode(pCurrent->m_pRight, pLastNodeInList);
+ComplexListNode* ReconnectNodes(ComplexListNode* pHead)
+{
+    ComplexListNode* pNode = pHead;
+    ComplexListNode* pClonedHead = nullptr;
+    ComplexListNode* pClonedNode = nullptr;
+ 
+    if(pNode != nullptr)
+    {
+        pClonedHead = pClonedNode = pNode->m_pNext;
+        pNode->m_pNext = pClonedNode->m_pNext;
+        pNode = pNode->m_pNext;
+    }
+ 
+    while(pNode != nullptr)
+    {
+        pClonedNode->m_pNext = pNode->m_pNext;
+        pClonedNode = pClonedNode->m_pNext;
+ 
+        pNode->m_pNext = pClonedNode->m_pNext;
+        pNode = pNode->m_pNext;
+    }
+ 
+    return pClonedHead;
 }
 ```
