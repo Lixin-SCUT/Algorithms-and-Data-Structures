@@ -1,0 +1,71 @@
+题目描述
+> 输入n个整数，找出其中最小的K个数。例如输入4,5,1,6,2,7,3,8这8个数字，则最小的4个数字是1,2,3,4,。
+
+这一题就没啥特别的了，就是用大顶堆就好，记得priority_queue默认是大顶堆less，而不是小顶堆greater
+然后就是还没想到的快速排序思想法，同样是找到第k个数；只是要注意k和下标、迭代器（左闭右开）的关系
+
+```
+class Solution {
+public:
+    //快速排序思想法
+    vector<int> GetLeastNumbers_Solution(vector<int> input, int k){
+        if(input.size()<k)
+            return vector<int>();
+        GetLeastNumbers_Solution(input,k,0,input.size()-1);
+        return vector<int>(input.begin(),input.begin()+k);
+    }
+    
+    void GetLeastNumbers_Solution(vector<int> &input, int k,int beg,int end){
+        int flag=input[beg];
+        int left=beg;
+        int right=end;
+        while(left<right){
+            while(left<right&&input[right]>=flag)
+                --right;
+            swap(input[left],input[right]);
+            while(left<right&&input[left]<=flag)
+                ++left;
+            swap(input[left],input[right]);
+        }
+        if(left==k)
+            return;
+        if(left<k)
+            GetLeastNumbers_Solution(input,k,left+1,end);
+        else
+            GetLeastNumbers_Solution(input,k,beg,left+1);
+    }
+    /*
+    //大顶堆
+    vector<int> GetLeastNumbers_Solution(vector<int> input, int k) {
+        vector<int> res;
+        if(k>input.size())
+            return res;
+        priority_queue<int> min_k;
+        for(auto i:input){
+            min_k.push(i);
+            if(min_k.size()>k)
+                min_k.pop();
+        }
+
+        while(min_k.size()){
+            res.push_back(min_k.top());
+            min_k.pop();
+        }
+        return res;
+    }
+    */
+};
+
+```
+
+书本题解：
+> &emsp;&emsp;解法一:时间复杂度为(n)的算法，只有当我们可以修改输入的数组时可用从解决面试题39 “数组中出现次数超过一半的数字”得到了启发，我们同样可以基于Partition函数来解决这个问题。如果基于数组的第k个数字来调整，则使得比第k个数字小的所有数字都位于数组的左边，比第k个数字大的所有数字都位于数组的右边。这样调整之后，位于数组中左边的k个数字就是最小的k个数字(这k个数字不一定是排序的)。
+&emsp;&emsp;采用这种思路是有限制的。我们需要修改输入的数组，因为函数Partition会调整数组中数字的顺序。
+&emsp;&emsp;解法二:时间复杂度为O(nlogk)的算法，特别适合处理海量数据。我们可以先创建一个大小为比的数据容器来存储最小的k个数字，接下来每次从输入的n个整数中读入一个数。如果容器中已有的数字少于k个, 则直接把这次读入的整数放入容器之中；如果容器中已有k个数字了，也就是容器已满，此时我们不能再插入新的数字而只能替换已有的数字。找 出这已有的k个数中的最大值，然后拿这次待插入的整数和最大值进行比 较。如果待插入的值比当前已有的最大值小，则用这个数替换当前已有的最大值：如果待插入的值比当前已有的最大值还要大，那么这个数不可能是最小的k个整数之一，于是我们可以抛弃这个整数。
+当容器满了之后，我们要做3件事情：一是在k个整数中找到最大数；二是有可能在这个容器中删除最大数；三是有可能要插入一个新的数字。如果用一棵二叉树来实现这个数据容器，那么我们能在O(logk)时间内实现这3步操作。因此，对于k个输入数字而言，总的时间效率就是 O(nlogk)
+（注意：是重要记得堆中的数据是没排序的，需要额外排序）
+解法比较
+&emsp;&emsp;基于函数Partition的第一种解法的平均时间复杂度是O(n)，比第二种解法要快，但同时它也有明显的限制，比如会修改输入的数组。
+&emsp;&emsp;第二种解法虽然慢一点，但它有两个明显的优点。一是没有修改输入的数据（代码中的变量data）。我们每次只是从data中读入数字，所有的操作都是在容器leastNumbers中进行的。二是该算法适合海量数据的输入 。假设题目是要求从海量的数据中找出最小的k个数字，由『内存的大小是有限的， 有可能不能把这些海量的数据一次性全部载入内存。这个时候，我们可以从辅助存储空间（如硬盘）中每次读入一个数字，根据GetLeastNumbers 的方式判断是不是需要放入容器leastNumbers即可。这种思路只要求内存能够容纳leastNumbers即可，因此它最适合的情形就是n很大并且比较小的问题。
+
+
