@@ -1,0 +1,56 @@
+题目描述
+> 给定一个数字，我们按照如下规则把它翻译为字符串：0翻译成"a"，1翻译成"b"，……，11翻译成"l"，……，25翻译成"z"。一个数字可能有多个翻译。例如12258有5种不同的翻译，它们是"bccfi"、"bwfi"、"bczi"、"mcfi"和"mzi"。请编程实现一个函数用来计算一个数字有多少种不同的翻译方法。
+
+书本题解：
+> &emsp;&emsp;当最开始的一个或者两个数字被翻译成一个字符之后，我们接着翻译后而剩下的数字。显然，我们可以写一个递归函数来计算翻译的数目。
+&emsp;&emsp;我们定义函数f(i)表小从第i位数字开始的不同翻译的数目，那么f(i)=f(i+1)+g(i,i+1)xf(i+2)。当第i位和第i+1位两位数字拼接起来的数字在 10〜25的范围内时，函数g(i,i+1)的值为1；否则为0。
+&emsp;&emsp;尽管我们用递归的思路来分析这个问题，但由于存在重复的子问题， 递归并不是解决这个问题的最佳方法。还是以12258为例。如前所述，翻译12258可以分解成两个子问题：翻译1和2258,以及翻译12和258。接 下来我们翻译第一个子问题中剩下的2258,同样也可以分解成两个自问题： 翻译2和258,以及翻译22和58。注意到子问题翻译258重复出现了。
+&emsp;&emsp;递归从最大的问题开始自上而下解决问题。我们也可以从最小的子问题开始自下而上解决问题，这样就可以消除重复的子问题。也就是说，我 们从数字的末尾开始，然后从右到左翻译并计算不同翻译的数目。
+
+```
+int GetTranslationCount(int number)
+{
+    if(number < 0)
+        return 0;
+
+    string numberInString = to_string(number);
+    return GetTranslationCount(numberInString);
+}
+
+int GetTranslationCount(const string& number)
+{
+    int length = number.length();
+    int* counts = new int[length];
+    int count = 0;
+
+    for(int i = length - 1; i >= 0; --i)
+    {
+        count = 0;
+         if(i < length - 1)
+               count = counts[i + 1];
+         else
+               count = 1;
+
+        if(i < length - 1)
+        {
+            int digit1 = number[i] - '0';
+            int digit2 = number[i + 1] - '0';
+            int converted = digit1 * 10 + digit2;
+            if(converted >= 10 && converted <= 25)
+            {
+                if(i < length - 2)
+                    count += counts[i + 2];
+                else
+                    count += 1;
+            }
+        }
+
+        counts[i] = count;
+    }
+
+    count = counts[0];
+    delete[] counts;
+
+    return count;
+}
+```
